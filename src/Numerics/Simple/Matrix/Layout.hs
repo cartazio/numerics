@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators#-}
 {-# LANGUAGE GADTs#-}
 {-# LANGUAGE ExplicitForAll #-}
-{-# LANGUAGE FlexibleInstances #-} 
+{-# LANGUAGE FlexibleInstances #-}
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE EmptyDataDecls #-}
