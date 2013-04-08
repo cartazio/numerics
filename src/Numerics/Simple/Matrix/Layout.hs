@@ -48,11 +48,14 @@ toInt :: Integral a => a  -> Int
 toInt x = (fromIntegral x) :: Int 
 {-# INLINE toInt #-}
 
-instance PrimMatrixLayout lay => StaticPrimMatrixLayout (SizedPow2  (n::Nat)) lay  where
-    staticTup2Addr  tup  _ = case 2 ^ ( toInt $ fromSing (undefined ::Sing n ) ) of
+
+-- Static* is an attempt to guarantee that statically known layouts
+-- can be statically specialized! 
+instance ( SingI n,PrimMatrixLayout lay) => StaticPrimMatrixLayout (SizedPow2  (n::Nat)) lay  where
+    staticTup2Addr  tup  _ = case 2 ^ ( toInt $! fromSing (sing ::Sing n ) ) of
                         pow2 ->  tup2addr  tup ((Shp pow2 pow2 ) :: Shape lay )
     {-# INLINE staticTup2Addr #-}
-    staticAdd2Tup ix _   = case 2 ^ ( toInt $ fromSing (undefined :: Sing n ) ) of
+    staticAdd2Tup ix _   = case 2 ^ ( toInt $! fromSing (sing:: Sing n ) ) of
                         pow2 ->  addr2tup ix ((Shp pow2 pow2 ) :: Shape lay )
     {-# INLINE staticAdd2Tup #-}    
 

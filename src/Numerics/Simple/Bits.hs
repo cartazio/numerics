@@ -84,19 +84,35 @@ interleave16Bits !x !y  = word2int $! xshifted .|. yshifted
 
 {-
 note: 32bit Ints give you ~ 4gb of addressable locations PER matrix/array
-lets just use the tricks for that size for now, though it might 
+so not sure if its worth it
 -}
 
-{-as writ, only shuffles the lower 32 bits, the rest are zerod out
-has good instruction level parallelism  (17 cycles in ideal), but 42 in sequential risc model -}
-outerShuffle32A :: Word -> Word
-outerShuffle32A !x =
-  case (x .&. 0x0000ff00 ) <<  8 .|. (x >> 8) .&. 0x0000FF00 .|. x  .&. 0xFF0000FF of 
-    x -> case ( x .&. 0x00F000F0 ) << 4 .|. (x >> 4) .&. 0x00F000F0 .|. x .&. 0xF00FF00F  of 
-      x->case (x .&.  0x0C0C0C0C )<< 2 .|.  (x >> 2) .&. 0x0C0C0C0C .|. x .&. 0xC3C3C3C3 of  
-        x-> case ( (x .&. 0x22222222)  << 1  .|. (x>> 1) .&. 0x22222222 .|. x .&. 0x99999999) of 
-            res -> res
-{-# INLINE outerShuffle32A #-}
+
+
+--mortonOuterShuffle 
+
+{- 64 bit generalization of 32bit outer shuffly from hackers delight
+should add conditional logic so that the step for 64 bit words is dropp
+ -}
+outerShuffle64A :: Word -> Word
+outerShuffle64A !x =
+--- the 16 shift should be conditional
+    case (x .&. 0x00000000FFFF0000) << 16 
+        .|. (x >> 16) .&. 0x00000000FFFF0000 .|. x .&. 0xFFFFFFFF0000FFFF of
+
+      x->case (x .&. 0x0000FF000000FF00 ) <<  8 
+            .|. (x >> 8) .&. 0x0000FF000000FF00 .|. x  .&. 0xFF0000FFFF0000FF of 
+
+        x -> case ( x .&. 0x00F000F000F000F0 ) << 4 
+            .|. (x >> 4) .&. 0x00F000F000F000F0 .|. x .&. 0xF00FF00FF00FF00F  of 
+
+          x->case (x .&.  0x0C0C0C0C0C0C0C0C )<< 2 
+                .|.   (x >> 2) .&. 0x0C0C0C0C0C0C0C0C .|. x .&. 0xC3C3C3C3C3C3C3C3 of  
+
+            x-> case ( (x .&. 0x2222222222222222)  << 1  
+                .|. (x>> 1) .&. 0x2222222222222222 .|. x .&. 0x9999999999999999) of 
+                    res -> res
+{-# INLINE outerShuffle64A #-}
 
 {-
 hacker's delight shuffle code listed 
@@ -105,7 +121,8 @@ at http://www.hackersdelight.org/hdcodetxt/shuffle.c.txt
 
 
 
-{- as writ, only 32 bit,
+{- 
+for the  32 bit version,
 30 cycles on sequential risc machine,
 21 cycles on unlimited instruction level parallelism machine
 
@@ -115,14 +132,18 @@ in terms of -fllvm -03, -threaded (or not),
 and what optimizations flags are pased to  llvm 
 
 -}
-{-# INLINE outerShuffle32B #-}
-outerShuffle32B :: Word->Word
-outerShuffle32B !x =
-  case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF00)   of 
-    x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F0) of 
-      x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C) of
-        x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x22222222) of 
-            res -> res 
+
+outerShuffle64B :: Word->Word
+outerShuffle64B !x =
+    case xor2LShift 16 x (xorRShift 16 x  .&.  0xFFFFFFFF0000FFFF) of 
+      x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)   of 
+        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
+          x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
+            x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
+                res -> res 
+{-# INLINE outerShuffle64B #-}
+
+
 
 {-make sure the shift amount is < WORD_SIZE-}
 {-# INLINE xor2LShift #-}
