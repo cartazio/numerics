@@ -12,7 +12,7 @@ module Numerics.Simple.Bits where
 import Data.Bits
 import Data.Word
 import Prelude hiding ((>>)) 
-
+import Numeric --- from base 
 
 
 
@@ -104,7 +104,83 @@ outerShuffle32A !x =
 
 
 
+outerShuffle64A :: Word -> Word
+outerShuffle64A !x =
+--- the 16 shift should be conditional
+    case ((x .&. 0x00000000FFFF0000) << 16 )
+        .|. ((x >> 16) .&. 0x00000000FFFF0000) .|. (x .&. 0xFFFF00000000FFFF) of
+      x->  case (x .&. 0x0000FF0000000FF00 ) <<  8 
+            .|. (x >> 8) .&. 0x0000FF000000FF00 .|. x  .&. 0xFF0000FFFF0000FF of 
 
+        x -> case ( x .&. 0x00F000F000F000F0 ) << 4 
+            .|. (x >> 4) .&. 0x00F000F000F000F0 .|. x .&. 0xF00FF00FF00FF00F  of 
+
+          x->case (x .&.  0x0C0C0C0C0C0C0C0C )<< 2 
+                .|.   (x >> 2) .&. 0x0C0C0C0C0C0C0C0C .|. x .&. 0xC3C3C3C3C3C3C3C3 of  
+
+            x-> case ( (x .&. 0x2222222222222222)  << 1  
+                .|. (x>> 1) .&. 0x2222222222222222 .|. x .&. 0x9999999999999999) of 
+                    res -> res
+{-# INLINE outerShuffle64A #-}
+
+printHex :: Word -> IO () 
+printHex n = putStrLn $ showHex n "" 
+
+{-
+*Numerics.Simple.Bits> printHex $ outerUnShuffle64 $ outerShuffle64B 0x4b4d977de8
+4b4d977de8
+*Numerics.Simple.Bits> printHex $ outerUnShuffle64 $ outerShuffle64A 0x4b4d977de8
+4b40977de8
+
+BADDDD
+
+-}
+
+
+--outerUnShuffle64A :: Word ->Word 
+
+
+
+
+--outerShuffle64B :: Word->Word
+---outerShuffle64 :: (Num a, Bits a) => a -> a
+outerShuffle64B :: Word -> Word 
+outerShuffle64B !x =
+    case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
+        {- why am I doing  0xFFFFFFFF0000FFFF here? tired logic  -}
+      x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)   of 
+        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
+          x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
+            x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
+                res -> res 
+{-# INLINE outerShuffle64B #-}
+--outerShuffle64B :: Word->Word
+
+--{-# SPECIALIZE outerShuffle64 :: Int->Int #-}
+
+
+--outerUnShuffle64 :: (Num a, Bits a) => a -> a
+outerUnShuffle64:: Word -> Word
+outerUnShuffle64 !x =
+    case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
+      x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
+        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
+          x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)  of 
+            x->  case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
+                {- why am I doing  0xFFFFFFFF0000FFFF-}
+                    !res -> res 
+{-# INLINE outerUnShuffle64 #-}
+--{-# SPECIALIZE outerUnShuffle64 :: Word->Word #-}
+--{-# SPECIALIZE outerUnShuffle64 :: Int->Int #-}
+
+{-make sure the shift amount is < WORD_SIZE-}
+{-# INLINE xor2LShift #-}
+xor2LShift :: Bits a => Int -> a -> a -> a 
+xor2LShift sft x t  =  x `xor` t `xor` (t << sft)
+
+{-# INLINE xorRShift #-}
+xorRShift :: Bits a => Int -> a -> a
+xorRShift sft x   = x `xor` (x >> sft )
 
 
 {-
@@ -133,42 +209,10 @@ and what optimizations flags are pased to  llvm
 -}
 
 --mortonZ x y = outerShuffle64 $!   (x << (bitSize x `div` 2))  .|.   ( y  .&. () )
+{--}
 
-
-
---outerShuffle64B :: Word->Word
-outerShuffle64 :: (Num a, Bits a) => a -> a
-outerShuffle64 !x =
-    case xor2LShift 16 x (xorRShift 16 x  .&.  0xFFFFFFFF0000FFFF) of 
-      x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)   of 
-        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
-          x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
-            x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
-                res -> res 
-{-# INLINABLE outerShuffle64 #-}
---outerShuffle64B :: Word->Word
-{-# SPECIALIZE outerShuffle64 :: Word->Word #-}
-{-# SPECIALIZE outerShuffle64 :: Int->Int #-}
-
-
-outerUnShuffle64 :: (Num a, Bits a) => a -> a
-outerUnShuffle64 !x =
-    case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
-      x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
-        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
-          x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)  of 
-            x->  case xor2LShift 16 x (xorRShift 16 x  .&.  0xFFFFFFFF0000FFFF) of 
-                    !res -> res 
-{-# INLINABLE outerUnShuffle64 #-}
-{-# SPECIALIZE outerUnShuffle64 :: Word->Word #-}
-{-# SPECIALIZE outerUnShuffle64 :: Int->Int #-}
-
-{-make sure the shift amount is < WORD_SIZE-}
-{-# INLINE xor2LShift #-}
-xor2LShift :: Bits a => Int -> a -> a -> a 
-xor2LShift sft x t  =  x `xor` t `xor` (t << sft)
-
-{-# INLINE xorRShift #-}
-xorRShift :: Bits a => Int -> a -> a
-xorRShift sft x   = x `xor` (x >> sft )
+tup2Outer :: TupInt -> Word 
+tup2Outer (TI x y) =  undefined
+    where !xw = int2word x 
+          !yw = int2word y 
 
