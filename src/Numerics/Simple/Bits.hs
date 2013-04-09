@@ -109,6 +109,7 @@ outerShuffle64A !x =
 --- the 16 shift should be conditional
     case ((x .&. 0x00000000FFFF0000) << 16 )
         .|. ((x >> 16) .&. 0x00000000FFFF0000) .|. (x .&. 0xFFFF00000000FFFF) of
+      
       x->  case (x .&. 0x0000FF0000000FF00 ) <<  8 
             .|. (x >> 8) .&. 0x0000FF000000FF00 .|. x  .&. 0xFF0000FFFF0000FF of 
 
@@ -123,6 +124,18 @@ outerShuffle64A !x =
                     res -> res
 {-# INLINE outerShuffle64A #-}
 
+
+outerShuffle64B :: Word -> Word 
+outerShuffle64B !x =
+    case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
+        {- why am I doing  0xFFFFFFFF0000FFFF here? tired logic  -}
+      x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)   of 
+        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
+          x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
+            x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
+                res -> res 
+{-# INLINE outerShuffle64B #-}
+
 printHex :: Word -> IO () 
 printHex n = putStrLn $ showHex n "" 
 
@@ -136,6 +149,9 @@ BADDDD
 
 -}
 
+wordRange = map  (\ix -> (ix, bit ix :: Word )) [0 .. bitSize (undefined :: Word) - 1 ]
+
+bitIdTest f = filter (\(_,t)->not t) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
 
 --outerUnShuffle64A :: Word ->Word 
 
@@ -144,16 +160,7 @@ BADDDD
 
 --outerShuffle64B :: Word->Word
 ---outerShuffle64 :: (Num a, Bits a) => a -> a
-outerShuffle64B :: Word -> Word 
-outerShuffle64B !x =
-    case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
-        {- why am I doing  0xFFFFFFFF0000FFFF here? tired logic  -}
-      x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF000000FF00)   of 
-        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
-          x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
-            x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
-                res -> res 
-{-# INLINE outerShuffle64B #-}
+
 --outerShuffle64B :: Word->Word
 
 --{-# SPECIALIZE outerShuffle64 :: Int->Int #-}
