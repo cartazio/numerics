@@ -110,19 +110,25 @@ outerShuffle64A !x =
     case ((x .&. 0x00000000FFFF0000) << 16 )
         .|. ((x >> 16) .&. 0x00000000FFFF0000) .|. (x .&. 0xFFFF00000000FFFF) of
       
-      x->  case (x .&. 0x0000FF0000000FF00 ) <<  8 
-            .|. (x >> 8) .&. 0x0000FF000000FF00 .|. x  .&. 0xFF0000FFFF0000FF of 
+      x->  case ((x .&. 0x0000FF000000FF00 ) <<  8 )
+       .|. (x >> 8) .&. 0x0000FF000000FF00 .|. (x  .&. 0xFF0000FFFF0000FF) of 
 
-        x -> case ( x .&. 0x00F000F000F000F0 ) << 4 
-            .|. (x >> 4) .&. 0x00F000F000F000F0 .|. x .&. 0xF00FF00FF00FF00F  of 
+        x -> case (( x .&. 0x00F000F000F000F0 ) << 4 )
+          .|. (x >> 4) .&. 0x00F000F000F000F0 .|. (x .&. 0xF00FF00FF00FF00F ) of 
 
-          x->case (x .&.  0x0C0C0C0C0C0C0C0C )<< 2 
-                .|.   (x >> 2) .&. 0x0C0C0C0C0C0C0C0C .|. x .&. 0xC3C3C3C3C3C3C3C3 of  
+          x->case   ((x .&.  0x0C0C0C0C0C0C0C0C )<< 2 )
+            .|. (x >> 2) .&. 0x0C0C0C0C0C0C0C0C .|.( x .&. 0xC3C3C3C3C3C3C3C3) of  
 
-            x-> case ( (x .&. 0x2222222222222222)  << 1  
-                .|. (x>> 1) .&. 0x2222222222222222 .|. x .&. 0x9999999999999999) of 
+            x-> case   ( (x .&. 0x2222222222222222)  << 1 ) 
+                .|. (x>> 1) .&. 0x2222222222222222 .|. (x .&. 0x9999999999999999) of 
                     res -> res
 {-# INLINE outerShuffle64A #-}
+
+outerShuffle64ABAD :: Word->Word 
+outerShuffle64ABAD !x =
+    case (outerShuffle32A  (((x>> 32) .&. 0xFFFF00000   ) .|. (((x >>16  ) .&. 0x0FFFF )  ))  << 32  ) 
+            .|. (outerShuffle32A  (   ((x >> 16)  .&. 0xFFFF0000 )  .|.  (x .&. 0xFFFF)    )   )   of 
+                !res -> res 
 
 
 outerShuffle64B :: Word -> Word 
@@ -136,6 +142,13 @@ outerShuffle64B !x =
                 res -> res 
 {-# INLINE outerShuffle64B #-}
 
+outerShuffle32B :: Word -> Word 
+outerShuffle32B !x =  case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF00)   of 
+        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F0) of 
+          x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C) of
+            x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x222222222) of 
+                !res -> res 
+
 printHex :: Word -> IO () 
 printHex n = putStrLn $ showHex n "" 
 
@@ -147,16 +160,33 @@ printHex n = putStrLn $ showHex n ""
 
 BADDDD
 
+*Numerics.Simple.Bits> bitIdTest (outerUnShuffle64 . outerShuffle64A)
+[(24,False),(25,False),(26,False),(27,False),(48,False),(49,False),(50,False),(51,False)]
+are the offending bits
+
+*Numerics.Simple.Bits> test64ABad 
+[(48,False),(49,False),(50,False),(51,False)]
+
+Thats narrowing down what i'm doing wrong..
+
+
 -}
 
 wordRange = map  (\ix -> (ix, bit ix :: Word )) [0 .. bitSize (undefined :: Word) - 1 ]
 
 bitIdTest f = filter (\(_,t)->not t) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
 
+suffixIdTest f = filter (\(_,t)->not t) $ 
+        map (\(ix,v)-> (ix, v == f v) ) $ map (\(ix,v)-> (ix, (2^v)  - 1)) wordRange
 --outerUnShuffle64A :: Word ->Word 
 
+bitIdTest32 f = filter (\(ix,t)->(not t && (ix < 31)) ) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
 
+test32A= bitIdTest32 (outerUnShuffle32 . outerShuffle32A) 
 
+test64A= bitIdTest (outerUnShuffle64 . outerShuffle64A)
+
+test64ABad = bitIdTest (outerUnShuffle64 . outerShuffle64ABAD)
 
 --outerShuffle64B :: Word->Word
 ---outerShuffle64 :: (Num a, Bits a) => a -> a
@@ -177,6 +207,17 @@ outerUnShuffle64 !x =
                 {- why am I doing  0xFFFFFFFF0000FFFF-}
                     !res -> res 
 {-# INLINE outerUnShuffle64 #-}
+
+outerUnShuffle32:: Word -> Word
+outerUnShuffle32 !x =
+    case xor2LShift 1 x (xorRShift 1 x .&. 0x222222222) of 
+      x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C) of
+        x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F0) of 
+          x -> case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF00) of
+                !res -> res 
+
+
+
 --{-# SPECIALIZE outerUnShuffle64 :: Word->Word #-}
 --{-# SPECIALIZE outerUnShuffle64 :: Int->Int #-}
 
