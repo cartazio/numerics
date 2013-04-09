@@ -12,7 +12,7 @@ module Numerics.Simple.Bits where
 import Data.Bits
 import Data.Word
 import Prelude hiding ((>>)) 
-import Numeric --- from base 
+
 
 
 
@@ -107,8 +107,8 @@ outerShuffle32A !x =
 outerShuffle64A :: Word -> Word
 outerShuffle64A !x =
 --- the 16 shift should be conditional
-    case ((x .&. 0x00000000FFFF0000) << 16 )
-        .|. ((x >> 16) .&. 0x00000000FFFF0000) .|. (x .&. 0xFFFF00000000FFFF) of
+    case      ((x .&. 0x00000000FFFF0000) << 16 )
+     .|. ((x>>16) .&. 0x00000000FFFF0000) .|. (x .&. 0xFFFF00000000FFFF) of
       
       x->  case ((x .&. 0x0000FF000000FF00 ) <<  8 )
        .|. (x >> 8) .&. 0x0000FF000000FF00 .|. (x  .&. 0xFF0000FFFF0000FF) of 
@@ -124,11 +124,6 @@ outerShuffle64A !x =
                     res -> res
 {-# INLINE outerShuffle64A #-}
 
-outerShuffle64ABAD :: Word->Word 
-outerShuffle64ABAD !x =
-    case (outerShuffle32A  (((x>> 32) .&. 0xFFFF00000   ) .|. (((x >>16  ) .&. 0x0FFFF )  ))  << 32  ) 
-            .|. (outerShuffle32A  (   ((x >> 16)  .&. 0xFFFF0000 )  .|.  (x .&. 0xFFFF)    )   )   of 
-                !res -> res 
 
 
 outerShuffle64B :: Word -> Word 
@@ -149,28 +144,9 @@ outerShuffle32B !x =  case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF00)   o
             x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x222222222) of 
                 !res -> res 
 
-printHex :: Word -> IO () 
-printHex n = putStrLn $ showHex n "" 
-
-{-
-*Numerics.Simple.Bits> printHex $ outerUnShuffle64 $ outerShuffle64B 0x4b4d977de8
-4b4d977de8
-*Numerics.Simple.Bits> printHex $ outerUnShuffle64 $ outerShuffle64A 0x4b4d977de8
-4b40977de8
-
-BADDDD
-
-*Numerics.Simple.Bits> bitIdTest (outerUnShuffle64 . outerShuffle64A)
-[(24,False),(25,False),(26,False),(27,False),(48,False),(49,False),(50,False),(51,False)]
-are the offending bits
-
-*Numerics.Simple.Bits> test64ABad 
-[(48,False),(49,False),(50,False),(51,False)]
-
-Thats narrowing down what i'm doing wrong..
 
 
--}
+
 
 wordRange = map  (\ix -> (ix, bit ix :: Word )) [0 .. bitSize (undefined :: Word) - 1 ]
 
@@ -178,7 +154,7 @@ bitIdTest f = filter (\(_,t)->not t) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
 
 suffixIdTest f = filter (\(_,t)->not t) $ 
         map (\(ix,v)-> (ix, v == f v) ) $ map (\(ix,v)-> (ix, (2^v)  - 1)) wordRange
---outerUnShuffle64A :: Word ->Word 
+
 
 bitIdTest32 f = filter (\(ix,t)->(not t && (ix < 31)) ) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
 
@@ -186,14 +162,8 @@ test32A= bitIdTest32 (outerUnShuffle32 . outerShuffle32A)
 
 test64A= bitIdTest (outerUnShuffle64 . outerShuffle64A)
 
-test64ABad = bitIdTest (outerUnShuffle64 . outerShuffle64ABAD)
 
---outerShuffle64B :: Word->Word
----outerShuffle64 :: (Num a, Bits a) => a -> a
 
---outerShuffle64B :: Word->Word
-
---{-# SPECIALIZE outerShuffle64 :: Int->Int #-}
 
 
 --outerUnShuffle64 :: (Num a, Bits a) => a -> a
@@ -256,11 +226,18 @@ and what optimizations flags are pased to  llvm
 
 -}
 
---mortonZ x y = outerShuffle64 $!   (x << (bitSize x `div` 2))  .|.   ( y  .&. () )
-{--}
+--- 64bit only for now
+{-
+NOTE: this is actually subtly wrong, 
+-}
 
 tup2Outer :: TupInt -> Word 
-tup2Outer (TI x y) =  undefined
+tup2Outer (TI x y) =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF) of 
+                        !res ->res
     where !xw = int2word x 
           !yw = int2word y 
+
+outer2Tup !w =   case TI (word2int $! ( w >> 32 ) .&. 0xFFFFFFFF )  (word2int $! (w .&. 0xFFFFFFFF) ) of 
+                    !res -> res
+
 
