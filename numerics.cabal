@@ -49,6 +49,11 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 
+-- Build the properties test if we're building tests
+flag test-properties
+  default: True
+  manual: True
+
 library
   -- Modules exported by the library.
     exposed-modules:    Data.Numerics.Simple.Matrix.Layout
@@ -74,8 +79,8 @@ library
   
   -- Other library packages from which modules are imported.
     build-depends:       base ==4.6.*,
-                    vector >= 0.10 && < 0.11,
-                    ghc-prim 
+                    vector >= 0.10 && < 0.11
+
   
   -- Directories containing source files.
     hs-source-dirs:      src 
@@ -96,3 +101,20 @@ benchmark benchmarks
         ghc-prim        >= 0.3,
         vector          >= 0.10,
         criterion   
+
+test-suite properties
+  type: exitcode-stdio-1.0
+  main-is: properties.hs
+  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: tests, src 
+
+  if !flag(test-properties)
+    buildable: False
+  else
+    build-depends:
+      base,
+      QuickCheck                 >= 2.4,
+      test-framework             >= 0.6,
+      test-framework-quickcheck2 >= 0.2,
+      test-framework-th          >= 0.2,
+      transformers        
