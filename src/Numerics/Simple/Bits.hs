@@ -126,6 +126,14 @@ outerShuffle64A !x =
 
 
 
+
+{-
+micro Benchmarks indicate outerShuffle64A is about 10-30 percent
+faster than outerShuffle64B 
+
+-}
+
+
 outerShuffle64B :: Word -> Word 
 outerShuffle64B !x =
     case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
@@ -193,12 +201,15 @@ outerUnShuffle32 !x =
 
 {-make sure the shift amount is < WORD_SIZE-}
 {-# INLINE xor2LShift #-}
-xor2LShift :: Bits a => Int -> a -> a -> a 
+--xor2LShift :: Bits a => Int -> a -> a -> a 
+xor2LShift:: Int -> Word -> Word -> Word 
 xor2LShift sft x t  =  x `xor` t `xor` (t << sft)
 
 {-# INLINE xorRShift #-}
-xorRShift :: Bits a => Int -> a -> a
+--xorRShift :: Bits a => Int -> a -> a
+xorRShift :: Int -> Word -> Word 
 xorRShift sft x   = x `xor` (x >> sft )
+
 
 
 {-
