@@ -2,7 +2,7 @@ module Main where
 
 import Criterion.Main
 --import Math.Indexors
-import Numerics.Simple.Bits
+import Data.Numerics.Simple.Bits
 import Criterion.Config
 import Data.Word 
 

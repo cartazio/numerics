@@ -7,11 +7,13 @@
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Numerics.Simple.Bits where
+module Data.Numerics.Simple.Bits(outerShuffle64A,outerUnShuffle64B) where
 
 import Data.Bits
 import Data.Word
 import Prelude hiding ((>>)) 
+
+
 
 
 
@@ -37,13 +39,19 @@ and Hackers Delight book (1st ed)
 
 ---------------------------------} 
 
+
+--- | TupInt is just a proxy for using unboxed tuples, 
+----  Should evaluate using those Tupint
 data TupInt = TI {-#UNPACK#-} !Int {-#UNPACK#-} !Int
+
+
+
 --- | quotRemStrong taks an int, the exponent of a number of the form 
 ---  
-unsafeQuotRemPow2  :: Int -> Int -> TupInt
-unsafeQuotRemPow2  a k  =  TI (a >> k) ( a .&. ((1 << k) -1  ) ) 
+uncheckedQuotRemPow2  :: Int -> Int -> TupInt
+uncheckedQuotRemPow2  a k  =  TI (a >> k) ( a .&. ((1 << k) -1  ) ) 
 
-quotRemPow2 a k | k <= (bitSize (undefined :: Int) -1 ) = unsafeQuotRemPow2 a k 
+quotRemPow2 a k | k <= (bitSize (undefined :: Int) -1 ) = uncheckedQuotRemPow2 a k 
                 | otherwise = error ("bad call to quotRemPow2 with args: "  ++ show a ++ " " ++ show k  )
 
 
@@ -59,7 +67,7 @@ int2word :: Int->Word
 int2word x = fromIntegral x
 {-# INLINE int2word #-}
 
-
+ 
 {-| interleaves the lowest 8 bits of x and y, 64bit only 
     interleave , result should be 16 bits
 this is likewise as written  going to do the 
@@ -128,8 +136,8 @@ outerShuffle64A !x =
 
 
 {-
-micro Benchmarks indicate outerShuffle64A is about 10-30 percent
-faster than outerShuffle64B 
+micro Benchmarks indicate outerShuffle64A  (mean 8.794 μs) is about 10-30 percent
+faster than outerShuffle64B  ( mean 11.85 μs )
 
 -}
 
@@ -175,8 +183,8 @@ test64A= bitIdTest (outerUnShuffle64 . outerShuffle64A)
 
 
 --outerUnShuffle64 :: (Num a, Bits a) => a -> a
-outerUnShuffle64:: Word -> Word
-outerUnShuffle64 !x =
+outerUnShuffle64B:: Word -> Word
+outerUnShuffle64B !x =
     case xor2LShift 1 x (xorRShift 1 x .&. 0x2222222222222222) of 
       x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C0C0C0C0C) of
         x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F000F000F0) of 
@@ -186,8 +194,8 @@ outerUnShuffle64 !x =
                     !res -> res 
 {-# INLINE outerUnShuffle64 #-}
 
-outerUnShuffle32:: Word -> Word
-outerUnShuffle32 !x =
+outerUnShuffle32B:: Word -> Word
+outerUnShuffle32B !x =
     case xor2LShift 1 x (xorRShift 1 x .&. 0x222222222) of 
       x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C) of
         x-> case xor2LShift 4 x (xorRShift 4 x .&. 0x00F000F0) of 
@@ -242,11 +250,15 @@ and what optimizations flags are pased to  llvm
 NOTE: this is actually subtly wrong, 
 -}
 
+
+
 tup2Outer :: TupInt -> Word 
 tup2Outer (TI x y) =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF) of 
-                        !res ->res
-    where !xw = int2word x 
-          !yw = int2word y 
+                    !res -> res
+            where !xw = int2word x 
+                  !yw = int2word y 
+
+  
 
 outer2Tup !w =   case TI (word2int $! ( w >> 32 ) .&. 0xFFFFFFFF )  (word2int $! (w .&. 0xFFFFFFFF) ) of 
                     !res -> res
