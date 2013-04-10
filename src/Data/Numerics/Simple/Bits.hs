@@ -7,7 +7,9 @@
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Numerics.Simple.Bits(outerShuffle64A,outerUnShuffle64B) where
+module Data.Numerics.Simple.Bits(outerShuffle64A
+                        ,outerUnShuffle64B
+                        ,outerShuffle64B) where
 
 import Data.Bits
 import Data.Word
@@ -174,9 +176,9 @@ suffixIdTest f = filter (\(_,t)->not t) $
 
 bitIdTest32 f = filter (\(ix,t)->(not t && (ix < 31)) ) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
 
-test32A= bitIdTest32 (outerUnShuffle32 . outerShuffle32A) 
+test32A= bitIdTest32 (outerUnShuffle32B . outerShuffle32A) 
 
-test64A= bitIdTest (outerUnShuffle64 . outerShuffle64A)
+test64A= bitIdTest (outerUnShuffle64B . outerShuffle64A)
 
 
 
@@ -192,7 +194,7 @@ outerUnShuffle64B !x =
             x->  case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
                 {- why am I doing  0xFFFFFFFF0000FFFF-}
                     !res -> res 
-{-# INLINE outerUnShuffle64 #-}
+{-# INLINE outerUnShuffle64B #-}
 
 outerUnShuffle32B:: Word -> Word
 outerUnShuffle32B !x =
