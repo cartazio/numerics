@@ -38,7 +38,8 @@ class PrimMatrixLayout lay   where
     addr2tup :: Int -> Shape lay  -> (# Int,Int #)
 
 
--- | For now lets only allow static matrices to be square
+-- | For now lets only allow static matrices to be square,
+-- also not sure if there needs to be different functions for the static case
 class    StaticPrimMatrixLayout f lay  where
     staticTup2Addr ::   (# Int,Int #)-> Shape (f lay) ->Int
     staticAdd2Tup :: Int -> Shape (f lay)  -> (# Int,Int #)

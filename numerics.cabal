@@ -78,7 +78,7 @@ library
                 ScopedTypeVariables  
   
   -- Other library packages from which modules are imported.
-    build-depends:       base >=4.5.0,
+    build-depends:       base >=4.6.0,
                     vector >= 0.10 && < 0.11
 
   
@@ -96,9 +96,8 @@ benchmark benchmarks
     type: exitcode-stdio-1.0
     ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3"
 
-    build-depends:
-        base >= 4.5.0,
-        --base            >= 4.6.0,
+    build-depends:        
+        base            >= 4.6.0,
         ghc-prim        >= 0.3,
         vector          >= 0.10,
         criterion   

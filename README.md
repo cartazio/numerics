@@ -1,9 +1,10 @@
 
-# Numerics by wellposed
+# Numerics by Wellposed
+principal author: Carter Tazio Schonwald
+copyright 2013 Carter Schonwald and WellPosed Ltd. All rights reserved
 
 
 
 
-# Current Build Status
-[![Build Status](https://drone.io/bitbucket.org/carter/numerics/status.png)](https://drone.io/bitbucket.org/carter/numerics/latest)
+
 
