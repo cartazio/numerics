@@ -9,7 +9,7 @@
 
 module Data.Numerics.Simple.Bits(outerShuffle64A
                         ,outerUnShuffle64B
-                        ,outerShuffle64B) where
+                        ,outerShuffle64B,outerUnShuffle64A,idShuffleA) where
 
 import Data.Bits
 import Data.Word
@@ -131,10 +131,29 @@ outerShuffle64A !x =
 
             x-> case   ( (x .&. 0x2222222222222222)  << 1 ) 
                 .|. (x>> 1) .&. 0x2222222222222222 .|. (x .&. 0x9999999999999999) of 
-                    res -> res
+                    !res -> res
 {-# INLINE outerShuffle64A #-}
 
 
+-- Outer Unshuffle 64A have 
+
+outerUnShuffle64A :: Word -> Word
+outerUnShuffle64A !x= 
+    case (x >> 1) .&. 0x2222222222222222 .|. 
+            ( x .&. 0x2222222222222222) << 1 .|. (x .&. 0x9999999999999999) of
+      x-> case   ((x .&.  0x0C0C0C0C0C0C0C0C )<< 2 )
+        .|. (x >> 2) .&. 0x0C0C0C0C0C0C0C0C .|.( x .&. 0xC3C3C3C3C3C3C3C3) of
+        x-> case (( x .&. 0x00F000F000F000F0 ) << 4 )
+          .|. (x >> 4) .&. 0x00F000F000F000F0 .|. (x .&. 0xF00FF00FF00FF00F ) of 
+          x-> case ((x .&. 0x0000FF000000FF00 ) <<  8 )
+           .|. (x >> 8) .&. 0x0000FF000000FF00 .|. (x  .&. 0xFF0000FFFF0000FF) of 
+            x->  case      ((x .&. 0x00000000FFFF0000) << 16 )
+             .|. ((x>>16) .&. 0x00000000FFFF0000) .|. (x .&. 0xFFFF00000000FFFF) of
+                !res-> res 
+{-# INLINE outerUnShuffle64A #-}
+
+---- LLVM's optimizor 'proved' that this is the identity function for me :) 
+idShuffleA  x= outerUnShuffle64A $ outerShuffle64A x
 
 
 {-

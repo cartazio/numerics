@@ -16,6 +16,8 @@ import Test.QuickCheck
 
 import Data.List
 
+import Data.Numerics.Simple.Bits
+
 main = defaultMain tests
 
 --mainWithOpts = do
@@ -38,4 +40,40 @@ main = defaultMain tests
 
 --  defaultMainWithOpts tests my_runner_opts
 
-tests = [ ] --- need to add some tests! 
+--tests = [
+--        testGroup "Sorting Group 1" [
+--                testProperty "sort1" prop_sort1,
+--                testProperty "sort2" prop_sort2,
+--                testProperty "sort3" prop_sort3
+--            ],
+--        testGroup "Sorting Group 2" [
+--                testGroup "Nested Group 1" [
+--                       testProperty "sort4" prop_sort4,
+--                       testProperty "sort5" prop_sort5,
+--                       testProperty "sort6" prop_sort6
+--                     ],
+--                testProperty "sort7" prop_sort7,
+--                testCase "sort8" test_sort8,
+--                testCase "sort9" test_sort9
+--            ]
+--    ]
+
+
+tests = [ 
+    testGroup "MortonZ Shuffles" [
+        testProperty "shuffle unshuffle is identity" prop_mortonOuterId,
+        testProperty "both shuffles agree" prop_mortonOuterShufflesAgree,
+        testProperty "both unshuffles agree " prop_mortonOuterUnshufflesAgree
+        ]
+
+    ] --- need to add some tests! 
+
+
+composeIsId x f finv = x == (finv $! f x )
+
+prop_mortonOuterId x =  composeIsId x outerShuffle64A outerUnShuffle64A  .&&. 
+            composeIsId x outerShuffle64B outerUnShuffle64B
+
+prop_mortonOuterUnshufflesAgree x =   outerUnShuffle64B x == outerUnShuffle64A x
+
+prop_mortonOuterShufflesAgree x = outerShuffle64B x == outerShuffle64A x 
