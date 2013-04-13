@@ -14,7 +14,7 @@ module Data.Numerics.Simple.Bits(outerShuffle64A
 import Data.Bits
 import Data.Word
 import Prelude hiding ((>>)) 
-
+import Data.List (foldl')
 
 
 
@@ -30,26 +30,17 @@ infixl 8  << , >>
 {-# INLINE (>>) #-}
 
 
-{-----------------------------------
 
-algs from 
-
-
-http://graphics.stanford.edu/~seander/bithacks.html#InterleaveTableObvious
-
-and Hackers Delight book (1st ed)
-
----------------------------------} 
 
 
 --- | TupInt is just a proxy for using unboxed tuples, 
 ----  Should evaluate using those Tupint
 data TupInt = TI {-#UNPACK#-} !Int {-#UNPACK#-} !Int
 
+data TupWord = TW {-#UNPACK#-} !Word {-#UNPACK#-} !Word
 
-
---- | quotRemStrong taks an int, the exponent of a number of the form 
----  
+--- | quotRemStrong taks an int, the exponent of a number 2^k as the value k, 
+---  returns (TI (a >> k)  (a .&. ((1 << k) -1 )  ) , the quotient and remainder
 uncheckedQuotRemPow2  :: Int -> Int -> TupInt
 uncheckedQuotRemPow2  a k  =  TI (a >> k) ( a .&. ((1 << k) -1  ) ) 
 
@@ -163,6 +154,50 @@ faster than outerShuffle64B  ( mean 11.85 μs )
 -}
 
 
+
+
+hilbIx2XY :: Int -> Word ->  TupWord
+hilbIx2XY order  = 
+    \ix -> 
+        let
+            go :: (Word,Word,Word)-> Int -> (Word,Word,Word)
+            go (!x, !y, !state  ) !stepI =   ( x <<1 .|. (0x936c >> row ) .&. 1 
+                        ,y <<1 .|. (0X39C6  >> row ) .&. 1 
+                         , (  0x3E6B94C1 >> (2*row))  .&. 3   )
+                    where !row = word2int $! 4*state .|. (ix >> stepI) .&. 3
+
+            in
+             case foldl' go (0,0,0) [2*order -2, -2 .. 0] of
+                            (!x,!y,_) -> TW x y    
+{-# INLINE  hilbIx2XY #-}                    
+
+{-  
+i'm writing hilbIx2XY this way because I want to make sure
+that can get specialized code when i know the rank/"order"
+of the hilbert curve. THis is kinda a doubly nested worker wrapper transform
+(not quite, but in spirit :) )
+
+-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------
+----- the *B outer shuffles should not be used, except to benchmark on 
+------ new architectures to validate default choices have good relative perf
+-----------------
+
+
 outerShuffle64B :: Word -> Word 
 outerShuffle64B !x =
     case xor2LShift 16 x (xorRShift 16 x  .&.  0x00000000FFFF0000) of 
@@ -180,28 +215,6 @@ outerShuffle32B !x =  case xor2LShift  8 x (xorRShift 8 x    .&. 0x0000FF00)   o
           x->  case xor2LShift 2 x (xorRShift 2 x .&. 0x0C0C0C0C) of
             x -> case xor2LShift 1 x (xorRShift 1 x .&. 0x222222222) of 
                 !res -> res 
-
-
-
-
-
-wordRange = map  (\ix -> (ix, bit ix :: Word )) [0 .. bitSize (undefined :: Word) - 1 ]
-
-bitIdTest f = filter (\(_,t)->not t) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
-
-suffixIdTest f = filter (\(_,t)->not t) $ 
-        map (\(ix,v)-> (ix, v == f v) ) $ map (\(ix,v)-> (ix, (2^v)  - 1)) wordRange
-
-
-bitIdTest32 f = filter (\(ix,t)->(not t && (ix < 31)) ) $ map (\(ix,v)-> (ix, v == f v) ) wordRange
-
-test32A= bitIdTest32 (outerUnShuffle32B . outerShuffle32A) 
-
-test64A= bitIdTest (outerUnShuffle64B . outerShuffle64A)
-
-
-
-
 
 --outerUnShuffle64 :: (Num a, Bits a) => a -> a
 outerUnShuffle64B:: Word -> Word
@@ -278,10 +291,12 @@ tup2Outer (TI x y) =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF
                     !res -> res
             where !xw = int2word x 
                   !yw = int2word y 
+{-# INLINE tup2Outer #-}                  
 
   
-
+outer2Tup :: Word -> TupInt
 outer2Tup !w =   case TI (word2int $! ( w >> 32 ) .&. 0xFFFFFFFF )  (word2int $! (w .&. 0xFFFFFFFF) ) of 
                     !res -> res
+{-# INLINE outer2Tup #-}
 
 
