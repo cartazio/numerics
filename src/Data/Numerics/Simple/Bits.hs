@@ -156,8 +156,8 @@ faster than outerShuffle64B  ( mean 11.85 μs )
 
 
 
-hilbIx2XY :: Int -> Word ->  TupWord
-hilbIx2XY order  = 
+hilbIx2XYa :: Int -> Word ->  TupWord
+hilbIx2XYa order  = 
     \ix -> 
         let
             go :: (Word,Word,Word)-> Int -> (Word,Word,Word)
@@ -169,18 +169,44 @@ hilbIx2XY order  =
             in
              case foldl' go (0,0,0) [2*order -2, -2 .. 0] of
                             (!x,!y,_) -> TW x y    
-{-# INLINE  hilbIx2XY #-}                    
+{-# INLINABLE  hilbIx2XYa #-}                    
 
 {-  
-i'm writing hilbIx2XY this way because I want to make sure
+i'm writing hilbS2XYa this way because I want to make sure
 that can get specialized code when i know the rank/"order"
 of the hilbert curve. THis is kinda a doubly nested worker wrapper transform
-(not quite, but in spirit :) )
+(not quite, but in spirit :), should also compare with the direct version too)
 
 -}
 
 
+{- Lam \& Shapiro algorithm for  taking the hilbert index -}
 
+hilbIx2XYbLS :: Int ->Word ->TupWord
+hilbIx2XYbLS order = 
+    \ix -> let 
+                go :: (Word,Word)-> Int -> (Word,Word )
+                go (!x,!y) !stepI  | sa `xor` sb == 0 = 
+                                        case prepender (y `xor` (complement sa)) (x `xor` (complement sa)) of
+                                                res@(!x,!y)-> res 
+
+                                  | otherwise =  
+                                        case   prepender x y   of 
+                                                    !res -> res 
+                                     
+                    where   
+                            !sa  = (ix >> (stepI +1)) .&. 1
+                            !sb  = (ix >> stepI) .&. 1 
+                            --- should prepender just capture sa and sb, or pass them?
+                            --- should bench both at some point
+                            prepender :: Word -> Word -> (Word , Word )
+                            prepender !x !y   =  
+                                    case (x >> 1 .|.  sa << (bitSize x -1) ,  
+                                          y >> 1 .|. (sa `xor` sb) << (bitSize x -1)) of 
+                                        res@(!x,!y) -> res 
+            in 
+                case foldl' go (0,0) [0,2 .. 2 * order - 1 ] of 
+                    (x,y) -> TW x y 
 
 
 
