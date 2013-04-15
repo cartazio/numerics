@@ -195,6 +195,41 @@ hilbIx2XYbLS order =
                                                     !res -> res 
                                      
                     where   
+                            --- note sa and sb are only nonzero (possibly nonzero)
+                            ---- in the 1 bit, always zero everywhere else 
+                            !sa  = (ix >> (stepI +1)) .&. 1
+                            !sb  = (ix >> stepI) .&. 1 
+                            --- should prepender just capture sa and sb, or pass them?
+                            --- should bench both at some point
+                            prepender :: Word -> Word -> (Word , Word )
+                            prepender !x !y   =  
+                                    case (x >> 1 .|.  sa << (bitSize x -1) ,  
+                                          y >> 1 .|. (sa `xor` sb) << (bitSize x -1)) of 
+                                        res@(!x,!y) -> res 
+            in 
+                case foldl' go (0,0) [0,2 .. 2 * order - 1 ] of 
+                    (x,y) -> TW (x >> normalize) (y>> normalize )
+                                where 
+                                    !normalize =(bitSize x  - order) 
+
+
+
+--- branchless lam shapiro 
+hilbIx2XYbLSBranchless :: Int ->Word ->TupWord
+hilbIx2XYbLSBranchless order = 
+    \ix -> let 
+                go :: (Word,Word)-> Int -> (Word,Word )
+                go (!x,!y) !stepI   =   case   prepender xFixed yFixed   of 
+                                                    !res -> res 
+                                     
+                    where   
+                            --- note sa and sb are only nonzero (possibly nonzero)
+                            ---- in the 1 bit, always zero everywhere else 
+                            !bitSwap = (sa `xor` sb) -1 
+                            !bitCompl = - (sa .&. sb)
+                            !xp = x `xor` y
+                            !xFixed = xp `xor` yFixed
+                            !yFixed = y `xor` (x .&. bitSwap ) `xor` bitCompl 
                             !sa  = (ix >> (stepI +1)) .&. 1
                             !sb  = (ix >> stepI) .&. 1 
                             --- should prepender just capture sa and sb, or pass them?
@@ -207,10 +242,6 @@ hilbIx2XYbLS order =
             in 
                 case foldl' go (0,0) [0,2 .. 2 * order - 1 ] of 
                     (x,y) -> TW x y 
-
-
-
-
 
 
 
