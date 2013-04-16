@@ -7,14 +7,23 @@
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Numerics.Simple.Bits(outerShuffle64A
-                        ,outerUnShuffle64B
-                        ,outerShuffle64B,outerUnShuffle64A,idShuffleA) where
+module Data.Numerics.Simple.Bits
+    -- this module is changing enough that its not worth
+    -- being explicit about imports 
+    -- (outerShuffle64A
+    --                        ,outerUnShuffle64B
+    --                        ,outerShuffle64B,outerUnShuffle64A,idShuffleA) 
+    where
 
 import Data.Bits
 import Data.Word
 import Prelude hiding ((>>)) 
 import Data.List (foldl')
+import Data.Typeable
+import Data.Data 
+
+
+import Data.Numerics.Simple.Util
 
 
 
@@ -33,14 +42,7 @@ infixl 8  << , >>
 
 
 
---- | TupInt is just a proxy for using unboxed tuples, 
-----  Should evaluate using those Tupint
-data TupInt = TI {-#UNPACK#-} !Int {-#UNPACK#-} !Int
 
-data TupWord = TW {-#UNPACK#-} !Word {-#UNPACK#-} !Word
-
---- | quotRemStrong taks an int, the exponent of a number 2^k as the value k, 
----  returns (TI (a >> k)  (a .&. ((1 << k) -1 )  ) , the quotient and remainder
 uncheckedQuotRemPow2  :: Int -> Int -> TupInt
 uncheckedQuotRemPow2  a k  =  TI (a >> k) ( a .&. ((1 << k) -1  ) ) 
 
@@ -216,8 +218,10 @@ hilbIx2XYbLS order =
 
 --- branchless lam shapiro 
 hilbIx2XYbLSBranchless :: Int ->Word ->TupWord
-hilbIx2XYbLSBranchless order = 
-    \ix -> let 
+hilbIx2XYbLSBranchless order ix = 
+     case foldl' go (0,0) [0,2 .. 2 * order - 1 ] of 
+                    (!x,!y) -> TW x y 
+        where 
                 go :: (Word,Word)-> Int -> (Word,Word )
                 go (!x,!y) !stepI   =   case   prepender xFixed yFixed   of 
                                                     !res -> res 
@@ -239,9 +243,8 @@ hilbIx2XYbLSBranchless order =
                                     case (x >> 1 .|.  sa << (bitSize x -1) ,  
                                           y >> 1 .|. (sa `xor` sb) << (bitSize x -1)) of 
                                         res@(!x,!y) -> res 
-            in 
-                case foldl' go (0,0) [0,2 .. 2 * order - 1 ] of 
-                    (x,y) -> TW x y 
+
+               
 
 
 
@@ -250,7 +253,7 @@ hilbIx2XYbLSBranchless order =
 --- based upon parallel prefix 32 version in hackers delight hilbert ix -> x y 
 --- algorithm
 hilbIx2XYParPrefix :: Int ->Word ->TupWord
-hilbIx2XYParPrefix order = \ix ->
+hilbIx2XYParPrefix order  ix = 
     case ix .|. (0x5555555555555555 << (2*order) ) of 
      !ix -> case (ix >> 1) .&. 0x5555555555555555 of 
       !ixr -> case ((ix .&. 0x5555555555555555 ) + ixr ) `xor` 0x5555555555555555 of
@@ -266,7 +269,18 @@ hilbIx2XYParPrefix order = \ix ->
                  !ix -> case ix .&. ((1<< (2*order))-1 ) of 
                   !ix -> case  outerUnShuffle64A ix of
                     !res-> TW (res >> (bitSize res `quot` 2)) (res .&. 0xFFFFFFFF) 
+{-# INLINABLE hilbIx2XYParPrefix #-}
 
+---------------
+---- loopy x y -> hilbert index
+-----------
+
+hilbXY2Ix ::Int ->TupWord -> Word 
+hilbXY2Ix order (TW !x !y) = 
+    case foldl' go  (0,0) [order -1, -1, 0] of
+        (!ix,!state)-> ix 
+        where 
+            go (!ix,!state) stepI = case
 
 
 
