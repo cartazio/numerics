@@ -245,6 +245,28 @@ hilbIx2XYbLSBranchless order =
 
 
 
+--- I really want to figure out the inverse of this version
+--- becaue then i'd have loop free branchless xy -> hilbert ix 
+--- based upon parallel prefix 32 version in hackers delight hilbert ix -> x y 
+--- algorithm
+hilbIx2XYParPrefix :: Int ->Word ->TupWord
+hilbIx2XYParPrefix order = \ix ->
+    case ix .|. (0x5555555555555555 << (2*order) ) of 
+     !ix -> case (ix >> 1) .&. 0x5555555555555555 of 
+      !ixr -> case ((ix .&. 0x5555555555555555 ) + ixr ) `xor` 0x5555555555555555 of
+       !cix-> case cix `xor` (cix >> 2) of
+        !cix -> case cix `xor` (cix >> 4) of 
+         !cix -> case cix `xor` (cix >> 8) of 
+          !cix -> case cix `xor` (cix >> 16) of
+           !cix -> case cix `xor` (cix >> 32) of  -- this is the only mod aside from 0x5555555555555555 for 64 bit!
+            !cix-> case cix .&. 0x5555555555555555 of 
+             !swap -> case (cix >> 1) .&. 0x5555555555555555 of
+              !comp -> case  (ix .&.  swap) `xor` comp  of
+               !t -> case ix `xor` ixr `xor` t `xor` (t << 1) of
+                 !ix -> case ix .&. ((1<< (2*order))-1 ) of 
+                  !ix -> case  outerUnShuffle64A ix of
+                    !res-> TW (res >> (bitSize res `quot` 2)) (res .&. 0xFFFFFFFF) 
+
 
 
 
