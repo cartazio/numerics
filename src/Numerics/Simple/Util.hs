@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 
-module  Data.Numerics.Simple.Util where
+module Numerics.Simple.Util where
 
 import Data.Typeable
 import Data.Data 

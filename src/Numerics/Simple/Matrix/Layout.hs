@@ -15,7 +15,7 @@
 
 {-#  LANGUAGE ScopedTypeVariables  #-}
 
-module Data.Numerics.Simple.Matrix.Layout where
+module Numerics.Simple.Matrix.Layout where
 
 
 import GHC.TypeLits     

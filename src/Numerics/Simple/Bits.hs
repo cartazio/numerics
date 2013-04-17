@@ -7,7 +7,7 @@
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Numerics.Simple.Bits
+module Numerics.Simple.Bits
     -- this module is changing enough that its not worth
     -- being explicit about imports 
     -- (outerShuffle64A
@@ -23,7 +23,7 @@ import Data.Typeable
 import Data.Data 
 
 
-import Data.Numerics.Simple.Util
+import Numerics.Simple.Util
 
 
 

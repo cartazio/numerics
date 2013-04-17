@@ -56,8 +56,8 @@ flag test-properties
 
 library
   -- Modules exported by the library.
-    exposed-modules:    Data.Numerics.Simple.Matrix.Layout
-                        Data.Numerics.Simple.Bits 
+    exposed-modules:    Numerics.Simple.Matrix.Layout
+                        Numerics.Simple.Bits 
   
   -- Modules included in this library but not exported.
   -- other-modules:       
