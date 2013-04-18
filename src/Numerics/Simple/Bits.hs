@@ -275,12 +275,20 @@ hilbIx2XYParPrefix order  ix =
 ---- loopy x y -> hilbert index
 -----------
 
+
+--- this code is a bit fugly, clean it up 
+---- its *correct*, but fugly
 hilbXY2Ix ::Int ->TupWord -> Word 
 hilbXY2Ix order (TW !x !y) = 
-    case foldl' go  (0,0) [order -1, -1, 0] of
+    case foldl' go  (0,0) [(order - 1) , - 1, 0] of
         (!ix,!state)-> ix 
         where 
-            go (!ix,!state) stepI = case
+            go :: (Word,Word)->Int ->(Word,Word)
+            go (!ix,!state) stepI = 
+                        case ( (ix<<2) .|. (( 0x361E9CB4 >> (2 * row ) ) .&. 3) ,
+                            ( 0x8FE65831 >> (2*row)  ) .&. 3) of 
+                            res@(!ix,!state)-> res 
+                 where row = word2int $! (4* state) .|. 2*((x >> stepI ).&. 1) .|. ((y>> stepI) .&. 1)
 
 
 

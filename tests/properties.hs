@@ -16,7 +16,7 @@ import Test.QuickCheck
 
 import Data.List
 
-import Data.Numerics.Simple.Bits
+import Numerics.Simple.Bits
 
 main = defaultMain tests
 
