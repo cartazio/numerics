@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Main where
 
 import Criterion.Main
@@ -21,8 +23,23 @@ main =  defaultMainWith defaultConfig (return ()) [
         bench "outerUnShuffle64A dot outerShuffle64A 1000" $! whnfIter 1000 (\x ->outerUnShuffle64A $! outerShuffle64A x) 7 ,
         bench "outerUnShuffle64B dot outerShuffle64A 1000" $! whnfIter 1000 (\x ->outerUnShuffle64B $! outerShuffle64A x) 7 ,
         bench "id 1000" $! whnfIter 1000 id 7 
-        ],
+        ]],
     bgroup "rowMaj" [],
-    bgroup "colMaj" []
-    ]]
+    bgroup "colMaj" [],
+
+    bgroup "POC mults in pow2" [
+            bgroup "In L1, 8kb 2^13 each "  
+               ( let    vTup=pureMkCAB  6
+                        localsize = 2^6
+                        in 
+                             [bcompare [ bench "AppleBlas "  $! whnfIO (
+                                do  (!cv,!av,!bv)<- return vTup 
+                                    blasMMult cv av bv (localsize))
+                                   ]] )
+
+
+        ] 
+    ]
+    
+    
 

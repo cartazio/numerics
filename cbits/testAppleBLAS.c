@@ -3,6 +3,6 @@
 /* we assume we're given 3 nxn matrices*/
 void simple_dgemm(double* c ,double* a,double* b, int n ){
 
-    cblas_dgemm(CblasRowMajor,CblasRowMajor,CblasNoTrans,n,n,n, 1.0,a,n,b,n,1.0,c,n);
+    cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,n,n,n, 1.0,a,n,b,n,1.0,c,n);
     
     }
