@@ -8,6 +8,7 @@ import Criterion.Config
 import Data.Word 
 
 import Data.Foldable 
+import AppleBlas
 
 whnfIter:: Int ->(a->a)-> a -> Pure 
 whnfIter cnt f  arg = whnf (\v -> foldl' (\ a b -> f a ) v [0 .. cnt]  ) arg

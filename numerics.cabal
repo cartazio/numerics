@@ -58,12 +58,14 @@ library
   -- Modules exported by the library.
     exposed-modules:    Numerics.Simple.Matrix.Layout
                         Numerics.Simple.Bits 
+                        Numerics.Simple.POC 
   
   -- Modules included in this library but not exported.
   -- other-modules:       
-    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -w  -threaded
+    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -w  -optc "-msse4.2"
     -- should probably have tests for both threaded  and unthreaded cases  
   -- LANGUAGE extensions used by modules in this package.
+
     other-extensions:    UnboxedTuples 
                 DataKinds 
                 TypeFamilies 
@@ -96,17 +98,28 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3"  -w -threaded
+    c-sources:          cbits/testAppleBLAS.c 
+    --- tell the compiler where to look 
+    if os(OSX)
+        extra-lib-dirs: /usr/local/lib/
+        include-dirs: /usr/local/include/
+        -- everyone uses brew 
+        extra-libraries: 
+
+        frameworks: Accelerate
 
     build-depends:        
         base            >= 4.6.0,
         ghc-prim        >= 0.3,
         vector          >= 0.10,
-        criterion   
+        criterion   ,
+        vector >= 0.10.0
+
 
 test-suite properties
     type: exitcode-stdio-1.0
     main-is: properties.hs
-    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -fhpc -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3"  -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs: tests, src 
     default-language:    Haskell2010
 
