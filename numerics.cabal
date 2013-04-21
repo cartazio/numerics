@@ -97,15 +97,22 @@ benchmark benchmarks
 
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
-    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3"  -w -threaded
+    --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
+    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  
     c-sources:          cbits/testAppleBLAS.c 
+    
+    -- we dont need no header files,
+
+
+
     --- tell the compiler where to look 
     if os(OSX)
-        extra-lib-dirs: /usr/local/lib/
-        include-dirs: /usr/local/include/
+        --extra-lib-dirs: /usr/local/lib/
+        --include-dirs: /usr/local/include/
         -- everyone uses brew 
-        extra-libraries: 
+        --extra-libraries: 
 
+        -- this is how i call blas to bench!
         frameworks: Accelerate
 
     build-depends:        

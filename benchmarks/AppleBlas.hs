@@ -3,16 +3,16 @@ module AppleBlas(blasMMult, pureMkCAB) where
 
 
 
-import Foreign
+import Foreign hiding (unsafePerformIO)
 import Foreign.C.Types
 import Unsafe.Coerce
 import Prelude hiding (replicate)
 --import Data.Storable
---import System.IO.Unsafe
+import System.IO.Unsafe
 import Data.Vector.Storable.Mutable  
 import GHC.Ptr (castPtr)
 
-foreign import ccall unsafe "simple_dgemm"
+foreign import ccall unsafe "testAppleBlas.h simple_dgemm"
     dgemm :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> CInt -> IO ()
 
 saphWrapper :: (Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> CInt -> IO ())-> ( Ptr Double -> Ptr Double -> Ptr Double -> Int -> IO ())

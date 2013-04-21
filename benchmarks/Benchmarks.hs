@@ -55,7 +55,11 @@ main =  defaultMainWith defaultConfig (return ()) [
                                 do  (!cv,!av,!bv)<- return vTup 
                                     blasMMult cv av bv (localsize))
                                    ]] )
-            ,bgroup "beyond  L3 2^20 each "  
+
+{-
+2^(23) * 3 bytes
+-}               
+            ,bgroup "beyond  L3 2^20 elms *8 bytes each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
                         powIx = 10
