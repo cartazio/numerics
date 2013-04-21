@@ -28,14 +28,52 @@ main =  defaultMainWith defaultConfig (return ()) [
     bgroup "colMaj" [],
 
     bgroup "POC mults in pow2" [
-            bgroup "In L1, 8kb 2^13 each "  
-               ( let    vTup=pureMkCAB  6
-                        localsize = 2^6
+            bgroup "In L1, 8kb 2^12 each "  
+               ( let    vTup=pureMkCAB powIx  
+                        localsize = 2^powIx
+                        powIx = 6
                         in 
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
                                     blasMMult cv av bv (localsize))
                                    ]] )
+            ,bgroup "In L2,  2^16 each "  
+               ( let    vTup=pureMkCAB powIx  
+                        localsize = 2^powIx
+                        powIx = 8
+                        in 
+                             [bcompare [ bench "AppleBlas "  $! whnfIO (
+                                do  (!cv,!av,!bv)<- return vTup 
+                                    blasMMult cv av bv (localsize))
+                                   ]] )
+            ,bgroup "In L3 2^18 each "  
+               ( let    vTup=pureMkCAB powIx  
+                        localsize = 2^powIx
+                        powIx = 9
+                        in 
+                             [bcompare [ bench "AppleBlas "  $! whnfIO (
+                                do  (!cv,!av,!bv)<- return vTup 
+                                    blasMMult cv av bv (localsize))
+                                   ]] )
+            ,bgroup "beyond  L3 2^20 each "  
+               ( let    vTup=pureMkCAB powIx  
+                        localsize = 2^powIx
+                        powIx = 10
+                        in 
+                             [bcompare [ bench "AppleBlas "  $! whnfIO (
+                                do  (!cv,!av,!bv)<- return vTup 
+                                    blasMMult cv av bv (localsize))
+                                   ]] )               
+
+            --,bgroup "beyond l3,  2^24 each, > 50mb total "  
+            --   ( let    vTup=pureMkCAB powIx  
+            --            localsize = 2^powIx
+            --            powIx = 12
+            --            in 
+            --                 [bcompare [ bench "AppleBlas "  $! whnfIO (
+            --                    do  (!cv,!av,!bv)<- return vTup 
+            --                        blasMMult cv av bv (localsize))
+            --                       ]] )            
 
 
         ] 
