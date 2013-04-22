@@ -45,12 +45,12 @@ newtype MortonN a = MN a
 
 unsafeDiceMZ :: 
     SM.Storable a => 
-    MortonZ (SM.MVector s a) -> MortonZ (Quad (SM.MVector s a))
+    MortonZ (SM.MVector s a) ->  Quad(MortonZ  (SM.MVector s a))
 unsafeDiceMZ  (MZ v) = 
-        MZ $! QD  (SM.unsafeSlice q1Base (q1Base + lenOffset) v )
-                    (SM.unsafeSlice q2Base (q2Base + lenOffset) v )
-                    ( SM.unsafeSlice q3Base (q3Base + lenOffset) v )
-                    (SM.unsafeSlice q4Base (q4Base + lenOffset)  v )
+        QD  (MZ $! SM.unsafeSlice q1Base (q1Base + lenOffset) v )
+            (MZ $! SM.unsafeSlice q2Base (q2Base + lenOffset) v )
+            (MZ $! SM.unsafeSlice q3Base (q3Base + lenOffset) v )
+            (MZ $! SM.unsafeSlice q4Base (q4Base + lenOffset)  v )
     where
         !len = (parentLength ) >> 2 ---  divide by 4
         !parentLength = (SM.length v )
@@ -62,12 +62,12 @@ unsafeDiceMZ  (MZ v) =
 
 unsafeDiceMFlipN
   :: SM.Storable a =>
-     MortonN (SM.MVector s a) -> MortonN (Quad (SM.MVector s a))
+     MortonN (SM.MVector s a) -> Quad (MortonN  (SM.MVector s a))
 unsafeDiceMFlipN (MN v) =  
-        MN $! QD  (SM.unsafeSlice q1Base (q1Base + lenOffset) v )
-                    (SM.unsafeSlice q2Base (q2Base + lenOffset) v )
-                    ( SM.unsafeSlice q3Base (q3Base + lenOffset) v )
-                    (SM.unsafeSlice q4Base (q4Base + lenOffset)  v )
+        QD  (MN $!  SM.unsafeSlice q1Base (q1Base + lenOffset) v )
+            (MN $! SM.unsafeSlice q2Base (q2Base + lenOffset) v )
+            (MN $! SM.unsafeSlice q3Base (q3Base + lenOffset) v )
+            (MN $! SM.unsafeSlice q4Base (q4Base + lenOffset)  v )
     where
         !len = (parentLength ) >> 2 ---  divide by 4
         !parentLength = (SM.length v )
@@ -77,7 +77,16 @@ unsafeDiceMFlipN (MN v) =
         !q4Base = parentLength - len    --- (4*len - len )
         !lenOffset = len -1   -- (we're 0 base indexed after all)
 
+-- i'm assuming you're giving me quadrants that are each 2x2 mats 
 
+unsafeQuadDirectMzMn2MzMMult  resQuad readLQuad  readRQuad= undefined
+
+-- i'm fed 3 2x2 matrices, i'll work on reading / writing them directly
+
+unsafeDirect2x2MzMnMz (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
+        do 
+            --undefined
+            return 1 
 
 
 
