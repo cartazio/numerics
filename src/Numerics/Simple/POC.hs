@@ -10,6 +10,14 @@
 
 module Numerics.Simple.POC where
 
+import Prelude hiding ((>>))
+
+import Numerics.Simple.Bits
+--import qualified  Data.Vector.Storable as S 
+import qualified Data.Vector.Storable.Mutable as SM 
+
+
+
 
 {-
 convention in this module
@@ -19,26 +27,59 @@ matrix M  =  decomposes as
  -----
  C | D 
 
+Quad a = Q (!(!a,!a),!(!a,!a))
+
+q1 | q2
+-------
+q3 | q4
 
 -}
+--- lets just use the data.vector.storable unsafe slice internall
 
-data Dice = Dice  {-#UNPACK#-} !Int {-# UNPACK #-} !Int 
+data Quad a = QD {q1:: !a,q2::  !a,q3:: !a,q4:: !a}
 
-{-  the max offset of the len element dice will be (base + len - 1) -}
-diceLen (Dice len ix) = len
-{-# INLINE diceLen #-}
+newtype MortonZ a = MZ a
 
-{- the "base"  is the index 0 position within the slice-}
-diceBase (Dice len ix)= ix
-{-# INLINE diceBase #-}
+-- well its upside down N, but whatever
+newtype MortonN a = MN a
 
-data MortonZDecomp = MZDecomp { mzdOffsetA :: !Dice,
-                        mzdOffsetB :: !Dice , mzdOffsetC :: !Int, mzdOffsetD:: !Int }
+unsafeDiceMZ :: 
+    SM.Storable a => 
+    MortonZ (SM.MVector s a) -> MortonZ (Quad (SM.MVector s a))
+unsafeDiceMZ  (MZ v) = 
+        MZ $! QD  (SM.unsafeSlice q1Base (q1Base + lenOffset) v )
+                    (SM.unsafeSlice q2Base (q2Base + lenOffset) v )
+                    ( SM.unsafeSlice q3Base (q3Base + lenOffset) v )
+                    (SM.unsafeSlice q4Base (q4Base + lenOffset)  v )
+    where
+        !len = (parentLength ) >> 2 ---  divide by 4
+        !parentLength = (SM.length v )
+        !q1Base = 0
+        !q2Base = len
+        !q3Base = len << 1   --- 2* len 
+        !q4Base = parentLength - len    --- (4*len - len )
+        !lenOffset = len -1 
+
+unsafeDiceMFlipN
+  :: SM.Storable a =>
+     MortonN (SM.MVector s a) -> MortonN (Quad (SM.MVector s a))
+unsafeDiceMFlipN (MN v) =  
+        MN $! QD  (SM.unsafeSlice q1Base (q1Base + lenOffset) v )
+                    (SM.unsafeSlice q2Base (q2Base + lenOffset) v )
+                    ( SM.unsafeSlice q3Base (q3Base + lenOffset) v )
+                    (SM.unsafeSlice q4Base (q4Base + lenOffset)  v )
+    where
+        !len = (parentLength ) >> 2 ---  divide by 4
+        !parentLength = (SM.length v )
+        !q1Base = 0
+        !q2Base = len << 1   --- MN same as MZ but with the base index for q2 and q3 swapped
+        !q3Base = len    
+        !q4Base = parentLength - len    --- (4*len - len )
+        !lenOffset = len -1   -- (we're 0 base indexed after all)
 
 
 
-data MortonFlipNDecomp = MFND { mfnLen :: !Int , mfnOffsetA :: !Int,
-                        mfnOffsetB :: !Int , mfnOffsetC :: !Int, mfnOffsetD:: !Int  }
+
 
 {-
 the code i'm writing in this module 
