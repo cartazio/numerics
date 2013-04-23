@@ -98,7 +98,7 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
-    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  
+    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  -optc "-msse4.2"
     c-sources:          cbits/testAppleBLAS.c 
     
     -- we dont need no header files,

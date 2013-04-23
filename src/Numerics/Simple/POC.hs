@@ -44,43 +44,46 @@ newtype MortonZ a = MZ a
 -- well its upside down N, but whatever
 newtype MortonN a = MN a
 
+{-# INLINE unsafeDiceMZ #-}
 unsafeDiceMZ
   :: GM.MVector v a => MortonZ (v s a) -> Quad (MortonZ (v s a))
 unsafeDiceMZ  (MZ v) = 
-        QD  (MZ $! GM.unsafeSlice q1Base (q1Base + lenOffset) v )
-            (MZ $! GM.unsafeSlice q2Base (q2Base + lenOffset) v )
-            (MZ $! GM.unsafeSlice q3Base (q3Base + lenOffset) v )
-            (MZ $! GM.unsafeSlice q4Base (q4Base + lenOffset)  v )
+        QD  (MZ $! GM.unsafeSlice q1Base len v )
+            (MZ $! GM.unsafeSlice q2Base len v )
+            (MZ $! GM.unsafeSlice q3Base len v )
+            (MZ $! GM.unsafeSlice q4Base len  v )
     where
-        !len = (parentLength ) >> 2 ---  divide by 4
+        !len = (parentLength ) `div` 4 ---  divide by 4, should do with shifts
         !parentLength = (GM.length v )
         !q1Base = 0
-        !q2Base = len
-        !q3Base = len << 1   --- 2* len 
-        !q4Base = parentLength - len    --- (4*len - len )
-        !lenOffset = len -1 
+        !q2Base = len 
+        !q3Base = len  << 1     --- 2* len 
+        !q4Base = parentLength - len   --- (4*len - len )
+        
 
+{-# INLINE unsafeDiceMFlipN #-}
 unsafeDiceMFlipN
   :: GM.MVector v a => MortonN (v s a) -> Quad (MortonN (v s a))
 unsafeDiceMFlipN (MN v) =  
-        QD  (MN $!  GM.unsafeSlice q1Base (q1Base + lenOffset) v )
-            (MN $! GM.unsafeSlice q2Base (q2Base + lenOffset) v )
-            (MN $! GM.unsafeSlice q3Base (q3Base + lenOffset) v )
-            (MN $! GM.unsafeSlice q4Base (q4Base + lenOffset)  v )
+        QD  (MN $!  GM.unsafeSlice q1Base len v )
+            (MN $! GM.unsafeSlice q2Base len  v )
+            (MN $! GM.unsafeSlice q3Base len  v )
+            (MN $! GM.unsafeSlice q4Base len  v )
     where
-        !len = (parentLength ) >> 2 ---  divide by 4
+        !len = (parentLength ) >>2 ---  divide by 4
         !parentLength = (GM.length v )
         !q1Base = 0
         !q2Base = len << 1   --- MN same as MZ but with the base index for q2 and q3 swapped
         !q3Base = len    
         !q4Base = parentLength - len    --- (4*len - len )
-        !lenOffset = len -1   -- (we're 0 base indexed after all)
+        
 
+--- 
+dgemmBlockWrapped a b c = degmmBlockStorableRecur (MZ a) (MZ b) (MN c)
 
-
-degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  | SM.length resArr < 16 =  error "bad params"
+degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  -- | SM.length resArr < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                             | SM.length resArr == 16 =  
-                                unsafeQuadDirectMzMn2MzMMult (unsafeDiceMZ res) 
+                                unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
                          | otherwise = 
         do 
@@ -108,13 +111,14 @@ unsafeBlockDiceRecurStorable resQuad readLQuad readRQuad =
 
 
 -- i'm assuming you're giving me quadrants that are each 2x2 mats 
---- so  3 * 2 *2 * 4 = 3 * 16 = 48
-unsafeQuadDirectMzMn2MzMMult
+--- so  3 * 2 *2 * 4 = 3 * 16 = 48 = 3 * 2^4
+{-# INLINE unsafeQuadDirectMzMn2MzMMultStorable #-}
+unsafeQuadDirectMzMn2MzMMultStorable
   :: Quad (MortonZ (SM.IOVector Double))
      -> Quad (MortonZ (SM.IOVector Double))
      -> Quad (MortonN (SM.IOVector Double))
      -> IO ()
-unsafeQuadDirectMzMn2MzMMult  resQuad readLQuad  readRQuad= 
+unsafeQuadDirectMzMn2MzMMultStorable  resQuad readLQuad  readRQuad= 
         do 
             unsafeDirect2x2MzMnMzStorable (q1 resQuad) (q1 readLQuad) (q1 readRQuad)
             unsafeDirect2x2MzMnMzStorable (q1 resQuad) (q2 readLQuad) (q2 readRQuad)

@@ -34,14 +34,18 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 15} (return ()) [
             bgroup "In L1, 8kb 2^12 each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
-                        powIx = 6
+                        powIx = 8
                         in 
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
                                     blasMMult cv av bv (localsize))
 
                                    ],
-                                   bench "POC Block"  $! whnfIO] )
+                                   bench "POC Block"  $! whnfIO (
+                                       do  
+                                            (!cv,!av,!bv)<- return vTup 
+                                            dgemmBlockWrapped cv av bv 
+                                            )] )
             ,bgroup "In L2,  2^16 each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
@@ -50,7 +54,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 15} (return ()) [
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
                                     blasMMult cv av bv (localsize))
-                                   ]] )
+                                   ],
+                                   bench "POC Block"  $! whnfIO (
+                                       do  
+                                            (!cv,!av,!bv)<- return vTup 
+                                            dgemmBlockWrapped cv av bv 
+                                            )] )
             ,bgroup "In L3 2^18 each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
@@ -59,7 +68,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 15} (return ()) [
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
                                     blasMMult cv av bv (localsize))
-                                   ]] )
+                                   ],
+                                   bench "POC Block"  $! whnfIO (
+                                       do  
+                                            (!cv,!av,!bv)<- return vTup 
+                                            dgemmBlockWrapped cv av bv 
+                                            )] )
 
 {-
 2^(23) * 3 bytes
@@ -72,7 +86,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 15} (return ()) [
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
                                     blasMMult cv av bv (localsize))
-                                   ]] )               
+                                   ],
+                                   bench "POC Block"  $! whnfIO (
+                                       do  
+                                            (!cv,!av,!bv)<- return vTup 
+                                            dgemmBlockWrapped cv av bv 
+                                            )] )               
 
             --,bgroup "beyond l3,  2^24 each, > 50mb total "  
             --   ( let    vTup=pureMkCAB powIx  
