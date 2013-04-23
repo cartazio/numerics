@@ -18,7 +18,9 @@ import qualified Data.Vector.Storable.Mutable as SM
 import qualified  Data.Vector.Generic.Mutable as GM 
 import qualified  Data.Vector.Unboxed.Mutable as UM 
 
-
+import Control.Monad.Par.IO
+import Control.Monad.Par.Class
+import Control.Monad.IO.Class
 
 {-
 convention in this module
@@ -79,16 +81,51 @@ unsafeDiceMFlipN (MN v) =
         
 
 --- 
-dgemmBlockWrapped a b c = degmmBlockStorableRecur (MZ a) (MZ b) (MN c)
+dgemmBlockWrapped :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
+dgemmBlockWrapped a b c = runParIO $!  degmmBlockStorableRecurTOP (MZ a) (MZ b) (MN c)
+
+degmmBlockStorableRecurTOP   res@(MZ resArr)  readL  readR  =
+        do 
+            unsafeBlockDiceRecurStorableTop  (unsafeDiceMZ res) 
+                                        (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
+
+
+
 
 degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  -- | SM.length resArr < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                             | SM.length resArr == 16 =  
                                 unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
                          | otherwise = 
-        do 
-            unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
+                            do 
+                                unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
+
+
+unsafeBlockDiceRecurStorableTop resQuad readLQuad readRQuad =
+        do 
+            a<- spawn $! liftIO ( 
+                do  degmmBlockStorableRecur(q1 resQuad) (q1 readLQuad) (q1 readRQuad)
+                    degmmBlockStorableRecur (q1 resQuad) (q2 readLQuad) (q2 readRQuad) )
+
+            b <- spawn $! liftIO (
+                do degmmBlockStorableRecur (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
+                   degmmBlockStorableRecur  (q2 resQuad) (q2 readLQuad) (q4 readRQuad))
+            --get a
+
+            c <- spawn $! liftIO (
+                do degmmBlockStorableRecur  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
+                   degmmBlockStorableRecur  (q3 resQuad) (q4 readLQuad) (q2 readRQuad))
+            --get b
+            d <- spawn $!  liftIO (
+                do  (degmmBlockStorableRecur (q4 resQuad) (q3 readLQuad) (q3 readRQuad))
+                    degmmBlockStorableRecur (q4 resQuad) (q4 readLQuad) (q4 readRQuad) )
+            get a
+            get b
+            get c 
+            get d 
+            return () 
+
 
 
 {-# INLINE unsafeBlockDiceRecurStorable #-}

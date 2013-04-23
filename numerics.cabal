@@ -82,7 +82,10 @@ library
   
   -- Other library packages from which modules are imported.
     build-depends:       base >=4.6.0,
-                    vector >= 0.10 && < 0.11
+                    vector >= 0.10 && < 0.11,
+                    monad-par >= 0.3.4,
+                    abstract-par,
+                    transformers >= 0.3.0.0
 
   
   -- Directories containing source files.
@@ -98,7 +101,7 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
-    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  -optc "-msse4.2"
+    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  -optc "-msse4.2"  -threaded -rtsopts -with-rtsopts=-N
     c-sources:          cbits/testAppleBLAS.c 
     
     -- we dont need no header files,
@@ -120,7 +123,10 @@ benchmark benchmarks
         ghc-prim        >= 0.3,
         vector          >= 0.10,
         criterion   ,
-        vector >= 0.10.0
+        vector >= 0.10.0,
+        monad-par >= 0.3.4,
+        abstract-par,
+        transformers >= 0.3.0.0
 
 
 test-suite properties
