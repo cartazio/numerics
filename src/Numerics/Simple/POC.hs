@@ -110,13 +110,15 @@ unsafeDiceMFlipN (MN v) =
         !q4Base = parentLength - len    --- (4*len - len )
         
 
-foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
-    c_SimpleMatMult4x4 :: Ptr Double -> Ptr Double -> Ptr Double -> IO ()
 
+foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
+    c_SimpleMatMult4x4 :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
+
+quadDirectSimpleC :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
 quadDirectSimpleC !res !leftM !rightM = 
     SM.unsafeWith res $! \a -> 
         SM.unsafeWith leftM $! \b ->
-            SM.unsafeWith rightM $! \c ->  c_SimpleMatMult4x4 a b c
+            SM.unsafeWith rightM $! \c ->  c_SimpleMatMult4x4  (castPtr a)  (castPtr b) (castPtr c)
 
 
 

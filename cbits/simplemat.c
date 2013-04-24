@@ -32,15 +32,15 @@ The value of addr is the address of the memory to prefetch. There are two option
 stride of 1, ie no bs!
 
 */
-inline void  SimpleMatMult2x2(double  res[], const double leftM[], const double rightM[]){
+inline void  SimpleMatMult2x2(double  *res, double *leftM, double *rightM){
         res[0] += ( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
         res[1] += (leftM[0] * rightM[2] + leftM[1] * rightM[3]);
-        res[2] += (leftM[2]* rightM[0]+ leftM[3]* rightM[1]);
-        res[3] += (leftM[2]* rightM[2]+ leftM[3]* rightM[3]);
+        res[2] += (leftM[2] * rightM[0]+ leftM[3] * rightM[1]);
+        res[3] += (leftM[2] * rightM[2]+ leftM[3] * rightM[3]);
 
     } 
 
-void SimpleMatMult4x4(double  res[], const double leftM[], const double rightM[]){
+void SimpleMatMult4x4(double  *res,  double *leftM, double *rightM){
     // quadrant 1
     SimpleMatMult2x2(res,leftM, rightM);
     SimpleMatMult2x2(res, leftM+4,rightM + 4 );
