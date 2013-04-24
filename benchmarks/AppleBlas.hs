@@ -12,7 +12,7 @@ import System.IO.Unsafe
 import Data.Vector.Storable.Mutable  
 import GHC.Ptr (castPtr)
 
-foreign import ccall unsafe "testAppleBlas.h simple_dgemm"
+foreign import ccall unsafe "testAppleBlas.c simple_dgemm"
     dgemm :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> CInt -> IO ()
 
 saphWrapper :: (Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> CInt -> IO ())-> ( Ptr Double -> Ptr Double -> Ptr Double -> Int -> IO ())

@@ -22,6 +22,8 @@ import Control.Monad.Par.IO
 import Control.Monad.Par.Class
 import Control.Monad.IO.Class
 
+import Data.Foldable
+
 {-
 convention in this module
 matrix M  =  decomposes as 
@@ -45,6 +47,29 @@ newtype MortonZ a = MZ a
 
 -- well its upside down N, but whatever
 newtype MortonN a = MN a
+
+{-
+here we assume resMat and LeftMat are row maj and rightMat is column major
+-}
+dotMMultStorable :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> Int -> IO ()
+dotMMultStorable !resMat !leftMat !rightMat !n = 
+            forM_ [0 .. n-1 ] (\row -> 
+                forM_ [0 ..n-1 ]( \col -> 
+                          let 
+                                !currentRowBase = n *row 
+                                !currentColBase = n*col
+                                fma !partialSum ix  = 
+                                        do 
+                                            leftOperand <- SM.unsafeRead leftMat $! ( currentRowBase+ ix )
+                                            rightOperand <- SM.unsafeRead rightMat $! (currentColBase  + ix)
+                                            return $! (partialSum + leftOperand * rightOperand)
+                                        --- this is not the most numerical stable dot product, but whatever
+                            in 
+                                do 
+                                    dotprod <- foldlM fma 0 [0 .. n -1 ]
+                                    SM.unsafeWrite resMat (currentRowBase + col )  dotprod
+                                    return ()
+                    ))
 
 {-# INLINE unsafeDiceMZ #-}
 unsafeDiceMZ
@@ -112,16 +137,15 @@ unsafeBlockDiceRecurStorableTop resQuad readLQuad readRQuad =
                 do degmmBlockStorableRecur (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
                    degmmBlockStorableRecur  (q2 resQuad) (q2 readLQuad) (q4 readRQuad))
             --get a
-
+            get a
+            get b
             c <- spawn $! liftIO (
                 do degmmBlockStorableRecur  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
                    degmmBlockStorableRecur  (q3 resQuad) (q4 readLQuad) (q2 readRQuad))
             --get b
             d <- spawn $!  liftIO (
                 do  (degmmBlockStorableRecur (q4 resQuad) (q3 readLQuad) (q3 readRQuad))
-                    degmmBlockStorableRecur (q4 resQuad) (q4 readLQuad) (q4 readRQuad) )
-            get a
-            get b
+                    degmmBlockStorableRecur (q4 resQuad) (q4 readLQuad) (q4 readRQuad) )            
             get c 
             get d 
             return () 
@@ -241,6 +265,7 @@ unsafeDirect2x2MzMnMzUnbox (MZ resMat) (MZ leftReadMat) (MN rightReadMat) =
             UM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
 
             -- these are all register friendly right?
+            -- need to try this unboxed version out shortly
             return ()
 
 

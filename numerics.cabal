@@ -86,8 +86,9 @@ library
                     monad-par >= 0.3.4,
                     abstract-par,
                     transformers >= 0.3.0.0
+    c-sources: cbits/prefetch.c
 
-  
+    
   -- Directories containing source files.
     hs-source-dirs:      src 
   
@@ -101,8 +102,9 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
-    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  -optc "-msse4.2"  -threaded -rtsopts -with-rtsopts=-N
-    c-sources:          cbits/testAppleBLAS.c 
+    ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  -optc "-msse4.2"  -threaded -rtsopts -with-rtsopts=-N2
+    c-sources:  cbits/testAppleBLAS.c 
+                cbits/prefetch.c
     
     -- we dont need no header files,
 
