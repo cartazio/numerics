@@ -107,12 +107,13 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                        do  
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
-                                            ) ,
-                                   bench "POC Naive Dot"  $! whnfIO (
-                                       do  
-                                            (!cv,!av,!bv)<- return vTup 
-                                            dotMMultStorable cv av bv  localsize
-                                            )
+                                            ) 
+                                   --,
+                                   --bench "POC Naive Dot"  $! whnfIO (
+                                   --    do  
+                                   --         (!cv,!av,!bv)<- return vTup 
+                                   --         dotMMultStorable cv av bv  localsize
+                                   --         )
                                    ]] )               
 
             --,bgroup "beyond l3,  2^24 each, > 50mb total "  

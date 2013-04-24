@@ -25,3 +25,41 @@ The value of addr is the address of the memory to prefetch. There are two option
         then investigate avx (doubtful that it'd help here)
 
 */
+
+
+/*
+3 2x2 matrics, row major, row major, col major repsectively
+stride of 1, ie no bs!
+
+*/
+inline void  SimpleMatMult2x2(double  res[], const double leftM[], const double rightM[]){
+        res[0] += ( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
+        res[1] += (leftM[0] * rightM[2] + leftM[1] * rightM[3]);
+        res[2] += (leftM[2]* rightM[0]+ leftM[3]* rightM[1]);
+        res[3] += (leftM[2]* rightM[2]+ leftM[3]* rightM[3]);
+
+    } 
+
+void SimpleMatMult4x4(double  res[], const double leftM[], const double rightM[]){
+    // quadrant 1
+    SimpleMatMult2x2(res,leftM, rightM);
+    SimpleMatMult2x2(res, leftM+4,rightM + 4 );
+
+    // quadrant 2
+    SimpleMatMult2x2(res +4, leftM, rightM + 8);
+    SimpleMatMult2x2(res+4, leftM + 4 , rightM + 12);
+
+    //quadrant 3
+    SimpleMatMult2x2(res+8, leftM + 8 , rightM);
+    SimpleMatMult2x2(res+8, leftM+12, rightM + 4);
+
+    //quadrant 4
+    SimpleMatMult2x2(res + 12 , leftM+ 8, rightM + 8);
+    SimpleMatMult4x4(res+ 12 , leftM + 12, rightM + 12);
+
+
+}
+
+
+
+

@@ -16,6 +16,7 @@ import Data.Word
 
 import Foreign
 import Foreign.C.Types
+import Foreign.Ptr
 import System.IO.Unsafe (unsafeDupablePerformIO)
 
 import qualified Data.Vector.Storable.Mutable as SM
@@ -32,11 +33,17 @@ data TupWord = TW {-#UNPACK#-} !Word {-#UNPACK#-} !Word
 ---  returns (TI (a >> k)  (a .&. ((1 << k) -1 )  ) , the quotient and remainder
 
 
+unsafePointerShiftWith   byteShift f ptr =  case f  $! pshifted of 
+                                        !res -> res 
+    where 
+        !pshifted =  plusPtr ptr byteShift 
+
 
 foreign import ccall unsafe "prefetch.c prefetchRead3" 
     c_prefetchRead :: Ptr a -> IO ()
 
 prefetchReadStorableM v = SM.unsafeWith v c_prefetchRead  
+prefetchReadStorableShiftedM  byteShift v = SM.unsafeWith v  $! unsafePointerShiftWith byteShift c_prefetchRead
 
 -- probably useless
 prefetchReadStorable v = unsafeDupablePerformIO $! prefetchReadStorableM v
@@ -45,6 +52,8 @@ foreign import ccall unsafe "prefetch.c prefetchWrite3"
     c_prefetchWrite  ::  Ptr a -> IO ()
 
 prefetchWriteStorableM   v = SM.unsafeWith v c_prefetchRead 
+prefetchWriteStorableShiftedM byteShift v = SM.unsafeWith v  $! unsafePointerShiftWith byteShift c_prefetchWrite
+
 
 -- probably useless
 prefetchWriteStorable v = unsafeDupablePerformIO $! prefetchWriteStorableM v 

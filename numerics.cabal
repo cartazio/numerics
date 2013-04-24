@@ -87,8 +87,9 @@ library
                     abstract-par,
                     transformers >= 0.3.0.0
     c-sources: cbits/prefetch.c
+                cbits/simplemat.c
 
-    
+
   -- Directories containing source files.
     hs-source-dirs:      src 
   
@@ -105,6 +106,7 @@ benchmark benchmarks
     ghc-options: -O2 -fllvm -optlo "-O3" -optlo "-bb-vectorize"  -optlc "-O3"  -optc "-msse4.2"  -threaded -rtsopts -with-rtsopts=-N2
     c-sources:  cbits/testAppleBLAS.c 
                 cbits/prefetch.c
+                cbits/simplemat.c
     
     -- we dont need no header files,
 

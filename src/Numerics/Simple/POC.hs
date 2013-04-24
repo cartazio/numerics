@@ -21,6 +21,11 @@ import qualified  Data.Vector.Unboxed.Mutable as UM
 import Control.Monad.Par.IO
 import Control.Monad.Par.Class
 import Control.Monad.IO.Class
+import Numerics.Simple.Util
+
+import Foreign.Ptr
+import Foreign
+import Foreign.C.Types
 
 import Data.Foldable
 
@@ -105,6 +110,16 @@ unsafeDiceMFlipN (MN v) =
         !q4Base = parentLength - len    --- (4*len - len )
         
 
+foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
+    c_SimpleMatMult4x4 :: Ptr Double -> Ptr Double -> Ptr Double -> IO ()
+
+quadDirectSimpleC !res !leftM !rightM = 
+    SM.unsafeWith res $! \a -> 
+        SM.unsafeWith leftM $! \b ->
+            SM.unsafeWith rightM $! \c ->  c_SimpleMatMult4x4 a b c
+
+
+
 --- 
 dgemmBlockWrapped :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
 dgemmBlockWrapped a b c = runParIO $!  degmmBlockStorableRecurTOP (MZ a) (MZ b) (MN c)
@@ -119,8 +134,9 @@ degmmBlockStorableRecurTOP   res@(MZ resArr)  readL  readR  =
 
 degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  -- | SM.length resArr < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                             | SM.length resArr == 16 =  
-                                unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
-                                        (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
+                                quadDirectSimpleC (unMZ res) (unMZ readL) (unMN readR)
+                                --unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
+                                        --(unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
                          | otherwise = 
                             do 
                                 unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
@@ -136,39 +152,53 @@ unsafeBlockDiceRecurStorableTop resQuad readLQuad readRQuad =
             b <- spawn $! liftIO (
                 do degmmBlockStorableRecur (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
                    degmmBlockStorableRecur  (q2 resQuad) (q2 readLQuad) (q4 readRQuad))
-            --get a
             get a
-            get b
+
             c <- spawn $! liftIO (
                 do degmmBlockStorableRecur  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
                    degmmBlockStorableRecur  (q3 resQuad) (q4 readLQuad) (q2 readRQuad))
-            --get b
+            get b
             d <- spawn $!  liftIO (
                 do  (degmmBlockStorableRecur (q4 resQuad) (q3 readLQuad) (q3 readRQuad))
                     degmmBlockStorableRecur (q4 resQuad) (q4 readLQuad) (q4 readRQuad) )            
+            --get a
+
             get c 
             get d 
             return () 
 
+degmmBlockStorableRecurPrefetched a b c =
+    do 
+        --prefetchReadStorableM . unMZ $! b
+        --prefetchReadStorableM . unMN $! c
+        --prefetchWriteStorableM . unMZ $! a 
+        degmmBlockStorableRecur a b c 
 
 
 {-# INLINE unsafeBlockDiceRecurStorable #-}
 unsafeBlockDiceRecurStorable resQuad readLQuad readRQuad =
             do 
-            degmmBlockStorableRecur(q1 resQuad) (q1 readLQuad) (q1 readRQuad)
-            degmmBlockStorableRecur (q1 resQuad) (q2 readLQuad) (q2 readRQuad)
 
-            degmmBlockStorableRecur (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
-            degmmBlockStorableRecur  (q2 resQuad) (q2 readLQuad) (q4 readRQuad)
+            degmmBlockStorableRecurPrefetched(q1 resQuad) (q1 readLQuad) (q1 readRQuad)
+            degmmBlockStorableRecurPrefetched (q1 resQuad) (q2 readLQuad) (q2 readRQuad)
 
-
-            degmmBlockStorableRecur  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
-            degmmBlockStorableRecur  (q3 resQuad) (q4 readLQuad) (q2 readRQuad)
-
-            degmmBlockStorableRecur (q4 resQuad) (q3 readLQuad) (q3 readRQuad)
-            degmmBlockStorableRecur (q4 resQuad) (q4 readLQuad) (q4 readRQuad)
+            degmmBlockStorableRecurPrefetched (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
+            degmmBlockStorableRecurPrefetched  (q2 resQuad) (q2 readLQuad) (q4 readRQuad)
 
 
+            degmmBlockStorableRecurPrefetched  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
+            degmmBlockStorableRecurPrefetched  (q3 resQuad) (q4 readLQuad) (q2 readRQuad)
+
+            degmmBlockStorableRecurPrefetched (q4 resQuad) (q3 readLQuad) (q3 readRQuad)
+            degmmBlockStorableRecurPrefetched (q4 resQuad) (q4 readLQuad) (q4 readRQuad)
+
+
+
+{-# INLINE unMZ #-}
+unMZ (MZ a) = a
+
+{-# INLINE unMN  #-}
+unMN (MN v) = v 
 
 
 -- i'm assuming you're giving me quadrants that are each 2x2 mats 
@@ -181,17 +211,34 @@ unsafeQuadDirectMzMn2MzMMultStorable
      -> IO ()
 unsafeQuadDirectMzMn2MzMMultStorable  resQuad readLQuad  readRQuad= 
         do 
+
+            prefetchReadStorableM . unMZ . q2 $! readLQuad
+            prefetchReadStorableM . unMN . q2 $! readRQuad
             unsafeDirect2x2MzMnMzStorable (q1 resQuad) (q1 readLQuad) (q1 readRQuad)
+
+            prefetchReadStorableM . unMN . q3 $! readRQuad
+            prefetchWriteStorableM . unMZ . q2 $! resQuad
             unsafeDirect2x2MzMnMzStorable (q1 resQuad) (q2 readLQuad) (q2 readRQuad)
 
+            ---------------
+            prefetchReadStorableM . unMN . q4 $! readRQuad
             unsafeDirect2x2MzMnMzStorable (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
+
+            prefetchWriteStorableM . unMZ . q3 $! resQuad
+            prefetchReadStorableM . unMZ . q3 $! readLQuad
             unsafeDirect2x2MzMnMzStorable (q2 resQuad) (q2 readLQuad) (q4 readRQuad)
 
-
+            -----------
+            prefetchReadStorableM . unMZ . q4 $! readLQuad
             unsafeDirect2x2MzMnMzStorable (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
+
+            prefetchWriteStorableM . unMZ . q4 $! resQuad            
             unsafeDirect2x2MzMnMzStorable (q3 resQuad) (q4 readLQuad) (q2 readRQuad)
 
+
+            -------
             unsafeDirect2x2MzMnMzStorable (q4 resQuad) (q3 readLQuad) (q3 readRQuad)
+
             unsafeDirect2x2MzMnMzStorable (q4 resQuad) (q4 readLQuad) (q4 readRQuad)
 
 
