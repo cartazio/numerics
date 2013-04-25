@@ -65,14 +65,14 @@ dotMMultStorable !resMat !leftMat !rightMat !n =
                                 !currentColBase = n*col
                                 fma !partialSum ix  = 
                                         do 
-                                            leftOperand <- SM.read leftMat $! ( currentRowBase+ ix )
-                                            rightOperand <- SM.read rightMat $! (currentColBase  + ix)
+                                            leftOperand <- SM.unsafeRead leftMat $! ( currentRowBase+ ix )
+                                            rightOperand <- SM.unsafeRead rightMat $! (currentColBase  + ix)
                                             return $! (partialSum + leftOperand * rightOperand)
                                         --- this is not the most numerical stable dot product, but whatever
                             in 
                                 do 
                                     dotprod <- foldlM fma 0 [0 .. n -1 ]
-                                    SM.write resMat (currentRowBase + col )  dotprod
+                                    SM.unsafeWrite resMat (currentRowBase + col )  dotprod
                                     return ()
                     ))
 
@@ -136,9 +136,9 @@ degmmBlockStorableRecurTOP   res@(MZ resArr)  readL  readR  =
 
 degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  -- | SM.length `sArr < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                             | SM.length resArr == 16 =  
-                                --quadDirectSimpleC (unMZ res) (unMZ readL) (unMN readR)
-                                unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
-                                        (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
+                                quadDirectSimpleC (unMZ res) (unMZ readL) (unMN readR)
+                                --unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
+                                        --(unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
                          | otherwise = 
                             do 
                                 unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
@@ -257,30 +257,30 @@ unsafeDirect2x2MzMnMzStorable ::  MortonZ (SM.IOVector Double)->
         MortonZ (SM.IOVector Double)->MortonN (SM.IOVector Double)-> IO ()
 unsafeDirect2x2MzMnMzStorable (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
         do 
-            l0  <- SM.read  leftReadMat  0
-            l1 <- SM.read  leftReadMat 1
-            r0 <- SM.read rightReadMat 0
-            r1 <- SM.read rightReadMat 1
+            l0  <- SM.unsafeRead  leftReadMat  0
+            l1 <- SM.unsafeRead  leftReadMat 1
+            r0 <- SM.unsafeRead rightReadMat 0
+            r1 <- SM.unsafeRead rightReadMat 1
 
-            res0 <- SM.read resMat 0
-            SM.write resMat 0 $! (l0 * r0 + l1 * r1 + res0)
+            res0 <- SM.unsafeRead resMat 0
+            SM.unsafeWrite resMat 0 $! (l0 * r0 + l1 * r1 + res0)
 
-            r2 <- SM.read rightReadMat 2 
-            r3 <- SM.read rightReadMat 3
+            r2 <- SM.unsafeRead rightReadMat 2 
+            r3 <- SM.unsafeRead rightReadMat 3
 
-            res1 <- SM.read resMat 1
+            res1 <- SM.unsafeRead resMat 1
 
-            SM.write resMat 1 $! (l0 * r2 + l1 * r3 + res1)            
+            SM.unsafeWrite resMat 1 $! (l0 * r2 + l1 * r3 + res1)            
 
 
-            l2 <-SM.read leftReadMat 2
-            l3 <- SM.read leftReadMat 3
+            l2 <-SM.unsafeRead leftReadMat 2
+            l3 <- SM.unsafeRead leftReadMat 3
 
-            res2 <- SM.read resMat 2
-            res3 <- SM.read resMat 3
+            res2 <- SM.unsafeRead resMat 2
+            res3 <- SM.unsafeRead resMat 3
 
-            SM.write resMat 2 $! (l2 * r0 + l3 * r1 + res2)
-            SM.write resMat 3 $! (l2 * r2 + l3 * r3 + res3)
+            SM.unsafeWrite resMat 2 $! (l2 * r0 + l3 * r1 + res2)
+            SM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
 
             -- these are all register friendly right?
             return ()
@@ -289,29 +289,29 @@ unsafeDirect2x2MzMnMzUnbox ::  MortonZ (UM.IOVector Double)->
         MortonZ (UM.IOVector Double)->MortonN (UM.IOVector Double)-> IO ()
 unsafeDirect2x2MzMnMzUnbox (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
         do 
-            l0  <- UM.read  leftReadMat  0
-            l1 <- UM.read  leftReadMat 1
-            r0 <- UM.read rightReadMat 0
-            r1 <- UM.read rightReadMat 1
+            l0  <- UM.unsafeRead  leftReadMat  0
+            l1 <- UM.unsafeRead  leftReadMat 1
+            r0 <- UM.unsafeRead rightReadMat 0
+            r1 <- UM.unsafeRead rightReadMat 1
 
-            res0 <- UM.read resMat 0
-            UM.write resMat 0 $! (l0 * r0 + l1 * r1 + res0)
+            res0 <- UM.unsafeRead resMat 0
+            UM.unsafeWrite resMat 0 $! (l0 * r0 + l1 * r1 + res0)
 
-            r2 <- UM.read rightReadMat 2 
-            r3 <- UM.read rightReadMat 3
+            r2 <- UM.unsafeRead rightReadMat 2 
+            r3 <- UM.unsafeRead rightReadMat 3
 
-            res1 <- UM.read resMat 1
+            res1 <- UM.unsafeRead resMat 1
 
-            UM.write resMat 1 $! (l0 * r2 + l1 * r3 + res1)
+            UM.unsafeWrite resMat 1 $! (l0 * r2 + l1 * r3 + res1)
 
-            l2 <-UM.read leftReadMat 2
-            l3 <- UM.read leftReadMat 3
+            l2 <-UM.unsafeRead leftReadMat 2
+            l3 <- UM.unsafeRead leftReadMat 3
 
-            res2 <- UM.read resMat 2
-            res3 <- UM.read resMat 3
+            res2 <- UM.unsafeRead resMat 2
+            res3 <- UM.unsafeRead resMat 3
 
-            UM.write resMat 2 $! (l2 * r0 + l3 * r1 + res2)
-            UM.write resMat 3 $! (l2 * r2 + l3 * r3 + res3)
+            UM.unsafeWrite resMat 2 $! (l2 * r0 + l3 * r1 + res2)
+            UM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
 
             -- these are all register friendly right?
             -- need to try this unboxed version out shortly
