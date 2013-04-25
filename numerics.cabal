@@ -62,7 +62,7 @@ library
   
   -- Modules included in this library but not exported.
   -- other-modules:       
-    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -w  -optc "-msse4.2"
+    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -w  -optc "-msse4.2" 
     -- should probably have tests for both threaded  and unthreaded cases  
   -- LANGUAGE extensions used by modules in this package.
 
@@ -106,7 +106,7 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
-    ghc-options: -O2 -fllvm -optlo "-O3"   -optlc "-O3"  -optlc "-mattr=+avx"  -optc   -threaded -rtsopts -with-rtsopts=-N2  -optlo "-bb-vectorize"
+    ghc-options: -O2 -fllvm -optlo "-O3"   -optlc "-O3"    -optc "-msse4.2"   -threaded -rtsopts -with-rtsopts=-N2  -optlo "-bb-vectorize" -prof -fprof-auto -rtsopts  -static
     c-sources:  cbits/testAppleBLAS.c 
                 cbits/prefetch.c
                 cbits/simplemat.c

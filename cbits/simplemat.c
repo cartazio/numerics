@@ -33,10 +33,10 @@ stride of 1, ie no bs!
 
 */
 
-typedef double dpAligned __attribute__((aligned (32))) ; 
+// typedef  __attribute__(__aligned__(32)) double doubleAligned; 
 
-static inline void  SimpleMatMult2x2( dpAligned  *res,
-    const dpAligned *leftM, const dpAligned *rightM){
+static inline void  SimpleMatMult2x2( double  *res,
+    const double *leftM, const double *rightM){
         res[0] = res[0] +( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
         res[1] = res[1] +(leftM[0] * rightM[2] + leftM[1] * rightM[3]);
         res[2] = res[2] +(leftM[2] * rightM[0]+ leftM[3] * rightM[1]);
@@ -44,31 +44,27 @@ static inline void  SimpleMatMult2x2( dpAligned  *res,
 
     } 
 
-void SimpleMatMult4x4( dpAligned *res,const dpAligned *leftM, const dpAligned *rightM){
+void SimpleMatMult4x4( double *res,const double *leftM, const double *rightM){
     // quadrant 1
     __builtin_prefetch(leftM+4,0);  // 1
     __builtin_prefetch(rightM+4,0); // 2
-
-    __builtin_prefetch(res+4,1);  // 3
-    __builtin_prefetch(rightM+8,0); // 4    
     SimpleMatMult2x2(res,leftM, rightM);
 
-    __builtin_prefetch(rightM+12,0); // 5
+    __builtin_prefetch(res+4,1);  // 3
+    __builtin_prefetch(rightM+8,0); // 4
     SimpleMatMult2x2(res, leftM+4,rightM + 4 );
 
     // quadrant 2
+    __builtin_prefetch(rightM+12,0); // 5
+    SimpleMatMult2x2(res + 4, leftM, rightM + 8);
     __builtin_prefetch(res+8,1); // 6
     __builtin_prefetch(leftM+8, 0); // 7
-
-    SimpleMatMult2x2(res + 4, leftM, rightM + 8);
-
-    __builtin_prefetch(leftM+12, 0); // 8
-    __builtin_prefetch(res + 12,1);  // 9, yes i've done all the prefetches
     SimpleMatMult2x2(res+4, leftM + 4 , rightM + 12);
 
     //quadrant 3
+    __builtin_prefetch(leftM+12, 0); // 8
     SimpleMatMult2x2(res + 8, leftM + 8 , rightM);
-
+    __builtin_prefetch(res + 12,1);  // 9, yes i've done all the prefetches
     SimpleMatMult2x2(res+8, leftM+12, rightM + 4);
 
     //quadrant 4
