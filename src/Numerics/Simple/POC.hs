@@ -114,6 +114,7 @@ unsafeDiceMFlipN (MN v) =
 foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
     c_SimpleMatMult4x4 :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
 
+{-# NOINLINE quadDirectSimpleC #-}
 quadDirectSimpleC :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
 quadDirectSimpleC !res !leftM !rightM = 
     SM.unsafeWith res $! \a -> 
@@ -151,16 +152,19 @@ unsafeBlockDiceRecurStorableTop resQuad readLQuad readRQuad =
             a<- spawn $! liftIO ( 
                 do  degmmBlockStorableRecur(q1 resQuad) (q1 readLQuad) (q1 readRQuad)
                     degmmBlockStorableRecur (q1 resQuad) (q2 readLQuad) (q2 readRQuad) )
-
+            --get a 
             b <- spawn $! liftIO (
                 do degmmBlockStorableRecur (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
                    degmmBlockStorableRecur  (q2 resQuad) (q2 readLQuad) (q4 readRQuad))
-            get a
-
+            --get b
+            get a 
+            get b 
             c <- spawn $! liftIO (
                 do degmmBlockStorableRecur  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
                    degmmBlockStorableRecur  (q3 resQuad) (q4 readLQuad) (q2 readRQuad))
-            get b
+            --get c 
+            --get b
+            ------ lets try sequentially for a wee bit
             d <- spawn $!  liftIO (
                 do  (degmmBlockStorableRecur (q4 resQuad) (q3 readLQuad) (q3 readRQuad))
                     degmmBlockStorableRecur (q4 resQuad) (q4 readLQuad) (q4 readRQuad) )            

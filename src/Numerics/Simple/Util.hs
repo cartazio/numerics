@@ -91,6 +91,7 @@ mallocPlainForeignPtrBytesAlignedAVX !(I# size) = IO $ \s ->
     where 
         !(I# align) =  32 --32 -- 256/8 = 32
 
+
 {-# INLINE basicUnsafeNewAVX #-}
 basicUnsafeNewAVX n  = unsafePrimToPrim
     $ do

@@ -106,7 +106,10 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
-    ghc-options: -O2 -fllvm -optlo "-O3"   -optlc "-O3"    -optc "-msse4.2"   -threaded -rtsopts -with-rtsopts=-N2  -optlo "-bb-vectorize" -prof -fprof-auto -rtsopts  -static
+    ghc-options: -O2 -fllvm -optlo "-O3"   -optlc "-O3"    -optc "-msse4.2"  -optlo "-bb-vectorize"  -rtsopts -threaded -with-rtsopts=-N2 -fprof-auto
+
+    --- -static -fprof-auto   
+            --  -threaded -rtsopts -with-rtsopts=-N2    
     c-sources:  cbits/testAppleBLAS.c 
                 cbits/prefetch.c
                 cbits/simplemat.c
