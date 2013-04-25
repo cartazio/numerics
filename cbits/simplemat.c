@@ -75,21 +75,21 @@ void SimpleMatMult4x4( double *res,const double *leftM, const double *rightM){
     // but gives it lower relative priority
 
 /// I think this causes a seg fault when i do profiling?!
-/*    __builtin_prefetch(res + 16, 1, 2);
-    __builtin_prefetch(leftM+16,0, 2);
-    __builtin_prefetch(rightM+16,0, 2);
+    __builtin_prefetch(res + 16, 1, 2);
+    __builtin_prefetch(leftM+16,0, 3);
+    __builtin_prefetch(rightM+16,0, 3;
 
-    __builtin_prefetch(res + 16 + 4, 1, 2);
-    __builtin_prefetch(res + 16 + 8, 1,2);
-    __builtin_prefetch(res+ 16 + 12, 1, 2);
+    __builtin_prefetch(res + 16 + 4, 1, 3);
+    __builtin_prefetch(res + 16 + 8, 1,3);
+    __builtin_prefetch(res+ 16 + 12, 1, 3;
 
-    __builtin_prefetch(leftM + 16 + 4, 0, 2);
-    __builtin_prefetch(leftM + 16 + 8, 0,2);
-    __builtin_prefetch(leftM + 16 + 12, 0, 2);
+    __builtin_prefetch(leftM + 16 + 4, 0, 3);
+    __builtin_prefetch(leftM + 16 + 8, 0,3);
+    __builtin_prefetch(leftM + 16 + 12, 0, 3;
 
-    __builtin_prefetch(rightM + 16 + 4, 0, 2);
-    __builtin_prefetch(rightM + 16 + 8, 0,2);
-    __builtin_prefetch(rightM+ 16 + 12, 0, 2);    */
+    __builtin_prefetch(rightM + 16 + 4, 0, 3);
+    __builtin_prefetch(rightM + 16 + 8, 0,3);
+    __builtin_prefetch(rightM+ 16 + 12, 0, 3)
 }
 
 
