@@ -6,6 +6,7 @@
 {-# LANGUAGE MagicHash, UnboxedTuples, DeriveDataTypeable #-}
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 
 module Numerics.Simple.Util where
@@ -18,6 +19,10 @@ import Foreign
 import Foreign.C.Types
 import Foreign.Ptr
 import System.IO.Unsafe (unsafeDupablePerformIO)
+import GHC.Exts
+import GHC.IO 
+import GHC.ForeignPtr
+import Control.Monad.Primitive
 
 import qualified Data.Vector.Storable.Mutable as SM
 
@@ -58,3 +63,43 @@ prefetchWriteStorableShiftedM byteShift v = SM.unsafeWith v  $! unsafePointerShi
 -- probably useless
 prefetchWriteStorable v = unsafeDupablePerformIO $! prefetchWriteStorableM v 
 
+
+
+{-# INLINE mallocAlignedVectorAVX #-}
+mallocAlignedVectorAVX :: Storable a => Int -> IO (ForeignPtr a)
+mallocAlignedVectorAVX =
+#if __GLASGOW_HASKELL__ >= 605
+    doMalloc undefined
+        where
+          doMalloc :: Storable b => b -> Int -> IO (ForeignPtr b)
+          doMalloc dummy size = mallocPlainForeignPtrBytesAlignedAVX (size * sizeOf dummy)
+#else
+    mallocForeignPtrArray
+#endif
+
+
+-- | This function is similar to 'mallocForeignPtrBytes', except that
+-- the internally an optimised ForeignPtr representation with no
+-- finalizer is used. Attempts to add a finalizer will cause an
+-- exception to be thrown.
+mallocPlainForeignPtrBytesAlignedAVX :: Int -> IO (ForeignPtr a)
+mallocPlainForeignPtrBytesAlignedAVX !(I# size) = IO $ \s ->
+        case newAlignedPinnedByteArray# size align s      of { (# s', mbarr# #) ->
+           (# s', ForeignPtr (byteArrayContents# (unsafeCoerce# mbarr#))
+                             (PlainPtr mbarr#) #)
+         }
+    where 
+        !(I# align) =  32 -- 256/8 = 32
+
+{-# INLINE basicUnsafeNewAVX #-}
+basicUnsafeNewAVX n  = unsafePrimToPrim
+    $ do
+        fp <- mallocAlignedVectorAVX n
+        return $ SM.MVector n fp
+
+{-# INLINE replicateAlignedAVX #-}
+replicateAlignedAVX ::(PrimMonad m, Storable a) => Int -> a -> m (SM.MVector (PrimState m) a)
+replicateAlignedAVX size init =
+        do  res <-  basicUnsafeNewAVX size
+            SM.set res init
+            return res 

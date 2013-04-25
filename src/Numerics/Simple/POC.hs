@@ -134,7 +134,7 @@ degmmBlockStorableRecurTOP   res@(MZ resArr)  readL  readR  =
 
 
 
-degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  -- | SM.length resArr < 16 =  error  $! ("bad params"++ show (SM.length resArr))
+degmmBlockStorableRecur   res@(MZ resArr)  readL  readR  -- | SM.length `sArr < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                             | SM.length resArr == 16 =  
                                 quadDirectSimpleC (unMZ res) (unMZ readL) (unMN readR)
                                 --unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 

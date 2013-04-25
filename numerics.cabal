@@ -85,7 +85,10 @@ library
                     vector >= 0.10 && < 0.11,
                     monad-par >= 0.3.4,
                     abstract-par,
-                    transformers >= 0.3.0.0
+                    transformers >= 0.3.0.0,
+                    primitive >= 0.5.0.0 && < 0.6
+
+
     c-sources: cbits/prefetch.c
                 cbits/simplemat.c
 
@@ -124,13 +127,16 @@ benchmark benchmarks
 
     build-depends:        
         base            >= 4.6.0,
-        ghc-prim        >= 0.3,
+        --ghc-prim        >= 0.3,
         vector          >= 0.10,
         criterion   ,
         vector >= 0.10.0,
         monad-par >= 0.3.4,
         abstract-par,
-        transformers >= 0.3.0.0
+
+        transformers >= 0.3.0.0,
+        primitive >= 0.5.0.0 && < 0.6
+
 
 
 test-suite properties
@@ -139,12 +145,32 @@ test-suite properties
     ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3"  -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs: tests, src 
     default-language:    Haskell2010
+    c-sources:  cbits/testAppleBLAS.c 
+            cbits/prefetch.c
+            cbits/simplemat.c
+    if os(OSX)
+        --extra-lib-dirs: /usr/local/lib/
+        --include-dirs: /usr/local/include/
+        -- everyone uses brew 
+        --extra-libraries: 
+
+        -- this is how i call blas to bench!
+        frameworks: Accelerate            
 
     if !flag(test-properties)
         buildable: False
     else
         build-depends:
-          base,
-          QuickCheck                 >= 2.4,
-          test-framework             >= 0.6,
-          test-framework-quickcheck2 >= 0.2
+            base,
+            QuickCheck                 >= 2.4,
+            test-framework             >= 0.6,
+            test-framework-quickcheck2 >= 0.2,
+                  vector          >= 0.10, 
+            vector >= 0.10.0,
+            monad-par >= 0.3.4,
+            abstract-par,
+
+            transformers >= 0.3.0.0,
+            primitive >= 0.5.0.0 && < 0.6
+
+

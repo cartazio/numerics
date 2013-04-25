@@ -12,6 +12,8 @@ import System.IO.Unsafe
 import Data.Vector.Storable.Mutable  
 import GHC.Ptr (castPtr)
 
+import Numerics.Simple.Util
+
 foreign import ccall unsafe "testAppleBlas.c simple_dgemm"
     dgemm :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> CInt -> IO ()
 
@@ -34,9 +36,9 @@ blasMMult aVect bVect  cVect n =
 -- returns (2^n x 2^n matrices, so builds vectors of size 4^n)
 mkABCIO :: Int -> IO (IOVector Double, IOVector Double, IOVector Double )
 mkABCIO n = do 
-        cVect <- replicate (4^n) 0.0 
-        aVect <- replicate (4^n) 0.0
-        bVect <- replicate (4^n) 0.0
+        cVect <- replicateAlignedAVX (4^n) 0.0 
+        aVect <- replicateAlignedAVX (4^n) 0.0
+        bVect <- replicateAlignedAVX (4^n) 0.0
         return (cVect, aVect, bVect)
   
 --- need this to allow sanely write the matrix mult benchmarks :)
