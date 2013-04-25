@@ -111,7 +111,7 @@ unsafeDiceMFlipN (MN v) =
         
 
 
-foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
+foreign import ccall safe "simplemat.c SimpleMatMult4x4" 
     c_SimpleMatMult4x4 :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
 
 {-# NOINLINE quadDirectSimpleC #-}
