@@ -89,7 +89,7 @@ void SimpleMatMult4x4( double *res,const double *leftM, const double *rightM){
 
     __builtin_prefetch(rightM + 16 + 4, 0, 3);
     __builtin_prefetch(rightM + 16 + 8, 0,3);
-    __builtin_prefetch(rightM+ 16 + 12, 0, 3)
+    __builtin_prefetch(rightM+ 16 + 12, 0, 3);
 }
 
 
