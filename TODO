@@ -1,0 +1,5 @@
+
+should have benchmarking script include time stamp + git repo commit has
++ have the benchmark script refuse to run if your repo is in dirty state
+
+(to log perf over time well)

@@ -1,6 +1,7 @@
 #! /bin/bash
 
 
-date "+%Y-%m-%d-%H:%M:%S" > NOW
+thedate=$(date "+%Y-%m-%d-%Hh-%Mm-%Ss")
 
-./dist/build/benchmarks/benchmarks  -o "BenchmarkLog/$`cat NOW`-bench.html"
+
+./dist/build/benchmarks/benchmarks  -o "BenchmarkLog/${thedate}-bench.html"

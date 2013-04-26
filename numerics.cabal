@@ -59,6 +59,7 @@ library
     exposed-modules:    Numerics.Simple.Matrix.Layout
                         Numerics.Simple.Bits 
                         Numerics.Simple.POC 
+                        Numerics.Simple.KernelPOC 
   
   -- Modules included in this library but not exported.
   -- other-modules:       

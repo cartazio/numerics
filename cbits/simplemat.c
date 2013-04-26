@@ -33,10 +33,11 @@ stride of 1, ie no bs!
 
 */
 
+#define restrict __restrict
 typedef  __attribute__((__aligned__(16)))  double doubleAl; 
 
-static inline void  SimpleMatMult2x2( doubleAl  * restrict res,
-     doubleAl * restrict leftM, doubleAl * restrict rightM){
+static inline void  SimpleMatMult2x2( doubleAl  *restrict res,
+     doubleAl *restrict leftM, doubleAl *restrict rightM){
         res[0] = res[0] +( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
         res[1] = res[1] +(leftM[0] * rightM[2] + leftM[1] * rightM[3]);
         res[2] = res[2] +(leftM[2] * rightM[0]+ leftM[3] * rightM[1]);
@@ -54,7 +55,7 @@ static inline void  SimpleMatMult2x2( doubleAl  * restrict res,
 }
 
 
-void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl * restrict rightM){
+void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM){
     // double res[16];
     // double leftM[16];
     // double rightM[16];
@@ -92,7 +93,7 @@ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubl
     SimpleMatMult2x2(res + 12 , leftM + 12, rightM + 12);
 
     //write the results back, hopefully clang can do the write coalescing this way!!
-    copyFromTo(res,resMat,16);
+    // copyFromTo(res,resMat,16);
 
 
 
@@ -100,9 +101,9 @@ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubl
     // but gives it lower relative priority
 
 /// I think this causes a seg fault when i do profiling?!
-    __builtin_prefetch(resMat + 16, 1, 1);
-    __builtin_prefetch(leftMat+16,0, 1);
-    __builtin_prefetch(rightMat+16,0, 1);
+    __builtin_prefetch(res + 16, 1, 1);
+    __builtin_prefetch(leftM+16,0, 1);
+    __builtin_prefetch(rightM+16,0, 1);
 
     // __builtin_prefetch(res + 16 + 4, 1, 3);
     // __builtin_prefetch(res + 16 + 8, 1,3);
