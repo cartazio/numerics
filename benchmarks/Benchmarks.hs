@@ -45,6 +45,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 4} (return ()) [
                                     (!cv,!av,!bv)<- return vTup 
                                     dgemmBlockWrapped cv av bv 
                                     ),
+                            bench "POC Block NOOP"  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    dgemmBlockNOOP cv av bv 
+                                    ),                           
                            bench "POC Naive Dot"  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
@@ -64,7 +69,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 4} (return ()) [
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
                                             ),
-                                   bench "POC Naive Dot"  $! whnfIO (
+                                    bench "POC Block NOOP"  $! whnfIO (
+                                       do  
+                                        (!cv,!av,!bv)<- return vTup 
+                                        dgemmBlockNOOP cv av bv 
+                                        ),
+                                    bench "POC Naive Dot"  $! whnfIO (
                                        do  
                                             (!cv,!av,!bv)<- return vTup 
                                             dotMMultStorable cv av bv  localsize
@@ -83,6 +93,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 4} (return ()) [
                                    do  
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockWrapped cv av bv 
+                                        ),
+                                    bench "POC Block NOOP"  $! whnfIO (
+                                       do  
+                                        (!cv,!av,!bv)<- return vTup 
+                                        dgemmBlockNOOP cv av bv 
                                         ),
                                bench "POC Naive Dot"  $! whnfIO (
                                    do  
@@ -106,7 +121,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 4} (return ()) [
                                        do  
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
-                                            ) 
+                                            ),
+                                    bench "POC Block NOOP"  $! whnfIO (
+                                       do  
+                                        (!cv,!av,!bv)<- return vTup 
+                                        dgemmBlockNOOP cv av bv 
+                                        ) 
                                    --,
                                    --bench "POC Naive Dot"  $! whnfIO (
                                    --    do  

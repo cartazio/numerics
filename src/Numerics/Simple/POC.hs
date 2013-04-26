@@ -23,6 +23,8 @@ import Control.Monad.Par.Class
 import Control.Monad.IO.Class
 import Numerics.Simple.Util
 
+import Control.Monad.Primitive (touch )
+
 import Foreign.Ptr
 import Foreign
 import Foreign.C.Types
@@ -121,15 +123,21 @@ quadDirectSimpleC !res !leftM !rightM =
         SM.unsafeWith leftM $! \b ->
             SM.unsafeWith rightM $! \c ->  c_SimpleMatMult4x4  (castPtr a)  (castPtr b) (castPtr c)
 
+type KerFunType = SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
 
-
---- 
+---  
 dgemmBlockWrapped :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
-dgemmBlockWrapped a b c = runParIO $!  degmmBlockStorableRecurTOP (MZ a) (MZ b) (MN c)
+dgemmBlockWrapped  =  dgemmBlockWrappedGen  quadDirectSimpleC 
 
-degmmBlockStorableRecurTOP   res@(MZ resArr)  readL  readR  =
+dgemmBlockNOOP = dgemmBlockWrappedGen (\ a b c -> do touch a ; touch b ; touch c ; return () )
+
+dgemmBlockWrappedGen :: KerFunType ->SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
+dgemmBlockWrappedGen kerfun = \a b  c -> (runParIO $!  degmmBlockStorableRecurTOP kerfun (MZ a) (MZ b) (MN c))
+
+
+degmmBlockStorableRecurTOP  kerfun res@(MZ resArr)  readL  readR  =
         do 
-            unsafeBlockDiceRecurStorableTop  (unsafeDiceMZ res) 
+            unsafeBlockDiceRecurStorableTop kerfun (unsafeDiceMZ res) 
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
 
 
@@ -147,7 +155,8 @@ degmmBlockStorableRecur   res@(MZ resArr)  readL  readR   | SM.length resArr < 1
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
 
 
-unsafeBlockDiceRecurStorableTop resQuad readLQuad readRQuad =
+unsafeBlockDiceRecurStorableTop  kernelFun = 
+    (\resQuad readLQuad readRQuad ->
         do 
             a<- spawn $! liftIO ( 
                 do  degmmBlockStorableRecur(q1 resQuad) (q1 readLQuad) (q1 readRQuad)
@@ -173,7 +182,35 @@ unsafeBlockDiceRecurStorableTop resQuad readLQuad readRQuad =
             get c 
             get d 
             return () 
+            )
 
+    where 
+        unsafeBlockDiceRecurStorable resQuad readLQuad readRQuad =
+                    do 
+
+                    degmmBlockStorableRecurPrefetched (q1 resQuad) (q1 readLQuad) (q1 readRQuad)
+                    degmmBlockStorableRecurPrefetched (q1 resQuad) (q2 readLQuad) (q2 readRQuad)
+
+                    degmmBlockStorableRecurPrefetched (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
+                    degmmBlockStorableRecurPrefetched  (q2 resQuad) (q2 readLQuad) (q4 readRQuad)
+
+
+                    degmmBlockStorableRecurPrefetched  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
+                    degmmBlockStorableRecurPrefetched  (q3 resQuad) (q4 readLQuad) (q2 readRQuad)
+
+                    degmmBlockStorableRecurPrefetched (q4 resQuad) (q3 readLQuad) (q3 readRQuad)
+                    degmmBlockStorableRecurPrefetched (q4 resQuad) (q4 readLQuad) (q4 readRQuad)
+
+        degmmBlockStorableRecur   res@(MZ resArr)  readL  readR   | SM.length resArr < 16  ||  SM.length (unMZ readL) < 16 || SM.length (unMN readR) < 16 =  error  $! ("bad params"++ show (SM.length resArr))
+                                    
+                                    | SM.length resArr == 16 =  
+                                        kernelFun (unMZ res) (unMZ readL) (unMN readR)
+                                        --unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
+                                                --(unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
+                                 | otherwise = 
+                                    do 
+                                        unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
+                                                (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
 degmmBlockStorableRecurPrefetched a b c =
     do 
         --prefetchReadStorableM . unMZ $! b
