@@ -7,7 +7,7 @@
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
-
+{-# OPTIONS_GHC -funbox-strict-fields  #-}
 
 module Numerics.Simple.Util where
 
