@@ -87,7 +87,7 @@ unsafeDiceMZ  (MZ v) =
             (MZ $! SM.unsafeSlice q3Base len v )
             (MZ $! SM.unsafeSlice q4Base len  v )
     where
-        !len = (parentLength ) `div` 4 ---  divide by 4, should do with shifts
+        !len = (parentLength ) >> 2 ---  divide by 4, should do with shifts
         !parentLength = (GM.length v )
         !q1Base = 0
         !q2Base = len 
@@ -129,7 +129,12 @@ type KerFunType = SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double
 dgemmBlockWrapped :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
 dgemmBlockWrapped !a !b !c =  dgemmBlockWrappedGen  quadDirectSimpleC  a b c 
 
-dgemmBlockNOOP !a !b !c = dgemmBlockWrappedGen  noopKern a b c 
+dgemmBlockNOOP !a !b !c = dgemmBlockWrappedGen  fancyNOOP a b c 
+
+fancyNOOP !res !leftM !rightM = 
+    SM.unsafeWith res $! \a -> 
+        SM.unsafeWith leftM $! \b ->
+            SM.unsafeWith rightM $! \c ->  return () 
 
 {-# NOINLINE noopKern #-}
 noopKern :: KerFunType 
