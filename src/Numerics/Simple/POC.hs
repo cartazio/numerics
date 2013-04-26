@@ -80,12 +80,12 @@ dotMMultStorable !resMat !leftMat !rightMat !n =
 
 {-# INLINE unsafeDiceMZ #-}
 unsafeDiceMZ
-  :: GM.MVector v a => MortonZ (v s a) -> Quad (MortonZ (v s a))
+  :: SM.MVector v a => MortonZ (v s a) -> Quad (MortonZ (v s a))
 unsafeDiceMZ  (MZ v) = 
-        QD  (MZ $! GM.unsafeSlice q1Base len v )
-            (MZ $! GM.unsafeSlice q2Base len v )
-            (MZ $! GM.unsafeSlice q3Base len v )
-            (MZ $! GM.unsafeSlice q4Base len  v )
+        QD  (MZ $! SM.unsafeSlice q1Base len v )
+            (MZ $! SM.unsafeSlice q2Base len v )
+            (MZ $! SM.unsafeSlice q3Base len v )
+            (MZ $! SM.unsafeSlice q4Base len  v )
     where
         !len = (parentLength ) `div` 4 ---  divide by 4, should do with shifts
         !parentLength = (GM.length v )
@@ -97,12 +97,12 @@ unsafeDiceMZ  (MZ v) =
 
 {-# INLINE unsafeDiceMFlipN #-}
 unsafeDiceMFlipN
-  :: GM.MVector v a => MortonN (v s a) -> Quad (MortonN (v s a))
+  :: SM.MVector v a => MortonN (v s a) -> Quad (MortonN (v s a))
 unsafeDiceMFlipN (MN v) =  
-        QD  (MN $!  GM.unsafeSlice q1Base len v )
-            (MN $! GM.unsafeSlice q2Base len  v )
-            (MN $! GM.unsafeSlice q3Base len  v )
-            (MN $! GM.unsafeSlice q4Base len  v )
+        QD  (MN $! SM.unsafeSlice q1Base len v )
+            (MN $! SM.unsafeSlice q2Base len  v )
+            (MN $! SM.unsafeSlice q3Base len  v )
+            (MN $! SM.unsafeSlice q4Base len  v )
     where
         !len = (parentLength ) >>2 ---  divide by 4
         !parentLength = (GM.length v )
