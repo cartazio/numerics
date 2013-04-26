@@ -80,7 +80,7 @@ dotMMultStorable !resMat !leftMat !rightMat !n =
 
 {-# INLINE unsafeDiceMZ #-}
 unsafeDiceMZ
-  :: SM.MVector v a => MortonZ (v s a) -> Quad (MortonZ (v s a))
+  :: MortonZ (SM.IOVector Double) -> Quad (MortonZ (SM.IOVector Double))
 unsafeDiceMZ  (MZ v) = 
         QD  (MZ $! SM.unsafeSlice q1Base len v )
             (MZ $! SM.unsafeSlice q2Base len v )
@@ -97,7 +97,7 @@ unsafeDiceMZ  (MZ v) =
 
 {-# INLINE unsafeDiceMFlipN #-}
 unsafeDiceMFlipN
-  :: SM.MVector v a => MortonN (v s a) -> Quad (MortonN (v s a))
+  ::   MortonN (SM.IOVector Double) -> Quad (MortonN (SM.IOVector Double))
 unsafeDiceMFlipN (MN v) =  
         QD  (MN $! SM.unsafeSlice q1Base len v )
             (MN $! SM.unsafeSlice q2Base len  v )
