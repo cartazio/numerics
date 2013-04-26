@@ -127,23 +127,27 @@ type KerFunType = SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double
 
 ---  
 dgemmBlockWrapped :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
-dgemmBlockWrapped  =  dgemmBlockWrappedGen  quadDirectSimpleC 
+dgemmBlockWrapped !a !b !c =  dgemmBlockWrappedGen  quadDirectSimpleC  a b c 
 
-dgemmBlockNOOP = dgemmBlockWrappedGen (\ a b c -> do touch a ; touch b ; touch c ; return () )
+dgemmBlockNOOP !a !b !c = dgemmBlockWrappedGen  noopKern a b c 
+
+{-# NOINLINE noopKern #-}
+noopKern :: KerFunType 
+noopKern a b c  = return () 
 
 dgemmBlockWrappedGen :: KerFunType ->SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
-dgemmBlockWrappedGen kerfun = \a b  c -> (runParIO $!  degmmBlockStorableRecurTOP kerfun (MZ a) (MZ b) (MN c))
+dgemmBlockWrappedGen !kerfun = \ !a !b  !c -> (runParIO $!  degmmBlockStorableRecurTopGen kerfun (MZ a) (MZ b) (MN c))
 
-
-degmmBlockStorableRecurTOP  kerfun res@(MZ resArr)  readL  readR  =
+{-# INLINE degmmBlockStorableRecurTopGen #-}
+degmmBlockStorableRecurTopGen  !kerfun !res@(MZ resArr)  !readL  !readR  =
         do 
-            unsafeBlockDiceRecurStorableTop kerfun (unsafeDiceMZ res) 
+            unsafeBlockDiceRecurStorableTopGen kerfun (unsafeDiceMZ res) 
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
 
 
 
 
-degmmBlockStorableRecur   res@(MZ resArr)  readL  readR   | SM.length resArr < 16  ||  SM.length (unMZ readL) < 16 || SM.length (unMN readR) < 16 =  error  $! ("bad params"++ show (SM.length resArr))
+degmmBlockStorableRecur   !res@(MZ resArr)  !readL  !readR   | SM.length resArr < 16  ||  SM.length (unMZ readL) < 16 || SM.length (unMN readR) < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                             
                             | SM.length resArr == 16 =  
                                 quadDirectSimpleC (unMZ res) (unMZ readL) (unMN readR)
@@ -154,9 +158,9 @@ degmmBlockStorableRecur   res@(MZ resArr)  readL  readR   | SM.length resArr < 1
                                 unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
                                         (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
 
-
-unsafeBlockDiceRecurStorableTop  kernelFun = 
-    (\resQuad readLQuad readRQuad ->
+{-# INLINE unsafeBlockDiceRecurStorableTopGen #-}
+unsafeBlockDiceRecurStorableTopGen  !kernelFun = 
+    (\ !resQuad !readLQuad !readRQuad ->
         do 
             a<- spawn $! liftIO ( 
                 do  degmmBlockStorableRecur(q1 resQuad) (q1 readLQuad) (q1 readRQuad)
@@ -185,31 +189,32 @@ unsafeBlockDiceRecurStorableTop  kernelFun =
             )
 
     where 
-        unsafeBlockDiceRecurStorable resQuad readLQuad readRQuad =
+        unsafeBlockDiceRecurStorableGen !resQuad !readLQuad !readRQuad =
                     do 
 
-                    degmmBlockStorableRecurPrefetched (q1 resQuad) (q1 readLQuad) (q1 readRQuad)
-                    degmmBlockStorableRecurPrefetched (q1 resQuad) (q2 readLQuad) (q2 readRQuad)
+                    degmmBlockStorableRecurGen (q1 resQuad) (q1 readLQuad) (q1 readRQuad)
+                    degmmBlockStorableRecurGen (q1 resQuad) (q2 readLQuad) (q2 readRQuad)
 
-                    degmmBlockStorableRecurPrefetched (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
-                    degmmBlockStorableRecurPrefetched  (q2 resQuad) (q2 readLQuad) (q4 readRQuad)
+                    degmmBlockStorableRecurGen (q2 resQuad) (q1 readLQuad) (q3 readRQuad)
+                    degmmBlockStorableRecurGen  (q2 resQuad) (q2 readLQuad) (q4 readRQuad)
 
 
-                    degmmBlockStorableRecurPrefetched  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
-                    degmmBlockStorableRecurPrefetched  (q3 resQuad) (q4 readLQuad) (q2 readRQuad)
+                    degmmBlockStorableRecurGen  (q3 resQuad) (q3 readLQuad) (q1 readRQuad)
+                    degmmBlockStorableRecurGen  (q3 resQuad) (q4 readLQuad) (q2 readRQuad)
 
-                    degmmBlockStorableRecurPrefetched (q4 resQuad) (q3 readLQuad) (q3 readRQuad)
-                    degmmBlockStorableRecurPrefetched (q4 resQuad) (q4 readLQuad) (q4 readRQuad)
+                    degmmBlockStorableRecurGen (q4 resQuad) (q3 readLQuad) (q3 readRQuad)
+                    degmmBlockStorableRecurGen (q4 resQuad) (q4 readLQuad) (q4 readRQuad)
 
-        degmmBlockStorableRecur   res@(MZ resArr)  readL  readR   | SM.length resArr < 16  ||  SM.length (unMZ readL) < 16 || SM.length (unMN readR) < 16 =  error  $! ("bad params"++ show (SM.length resArr))
+        degmmBlockStorableRecurGen   !res@(MZ resArr)  !readL  !readR   | SM.length resArr < 16  ||  SM.length (unMZ readL) < 16 || SM.length (unMN readR) < 16 =  error  $! ("bad params"++ show (SM.length resArr))
                                     
                                     | SM.length resArr == 16 =  
+                                        -- the 4x4 * 3 kernel fun call
                                         kernelFun (unMZ res) (unMZ readL) (unMN readR)
                                         --unsafeQuadDirectMzMn2MzMMultStorable (unsafeDiceMZ res) 
                                                 --(unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
                                  | otherwise = 
                                     do 
-                                        unsafeBlockDiceRecurStorable (unsafeDiceMZ res) 
+                                        unsafeBlockDiceRecurStorableGen (unsafeDiceMZ res) 
                                                 (unsafeDiceMZ readL) (unsafeDiceMFlipN readR)
 degmmBlockStorableRecurPrefetched a b c =
     do 
