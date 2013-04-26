@@ -82,6 +82,9 @@ mallocAlignedVectorAVX =
 -- the internally an optimised ForeignPtr representation with no
 -- finalizer is used. Attempts to add a finalizer will cause an
 -- exception to be thrown.
+
+-- should look into using 
+
 mallocPlainForeignPtrBytesAlignedAVX :: Int -> IO (ForeignPtr a)
 mallocPlainForeignPtrBytesAlignedAVX !(I# size) = IO $ \s ->
         case newAlignedPinnedByteArray# size align s      of { (# s', mbarr# #) ->
@@ -89,7 +92,7 @@ mallocPlainForeignPtrBytesAlignedAVX !(I# size) = IO $ \s ->
                              (PlainPtr mbarr#) #)
          }
     where 
-        !(I# align) =  32 --32 -- 256/8 = 32
+        !(I# align) =  16 --32 -- 256/8 = 32 , 16byte alignment should be enough though
 
 
 {-# INLINE basicUnsafeNewAVX #-}
