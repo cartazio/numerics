@@ -73,8 +73,9 @@ quadDirectSimpleWithShiftC aix !bix !cix  !res !leftM !rightM  =
     SM.unsafeWith res $! \a -> 
         SM.unsafeWith leftM $! \b ->
             SM.unsafeWith rightM $! \c ->  
-                c_SimpleMatMult4x4  (a `plusPtr` (16*4* aix))  ( b `plusPtr` (16*4* bix)) (c `plusPtr` (16*4* cix))
-
+                c_SimpleMatMult4x4  (a `plusPtr` (blockSizeBytes* aix))  ( b `plusPtr` (blockSizeBytes* bix)) (c `plusPtr` (blockSizeBytes* cix))
+    where 
+        !blockSizeBytes = 8 * 4 * 4 -- double is 64bits, 8 bytes, and we are considering 4x4 blocks
 
 data OrdinateTriple = OTrip { x :: !Double , y :: !Double , z :: ! Double }
 
@@ -93,9 +94,9 @@ type Kerfun  b= Int -> Int -> Int->  b
 
 
 ---- its not the id kernel!! 
-{-# INLINE idKernel #-}
-idKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
-idKernel  !aix !bix !cix aMat bMat cMat =  
+{-# INLINE basicKernel #-}
+basicKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
+basicKernel  !aix !bix !cix aMat bMat cMat =  
                          do 
                             --touch aix 
                             --touch bix
@@ -117,20 +118,29 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
     where 
         !blockedN = n `div` 4 --- 4x4
         !blockCubed = blockedN * blockedN * blockedN
-        go !x !y !z   !count |  (count < blockCubed)  --- this seems wrong, but whatever
-                =  --- if we hit the bounds all at once, we win!
+        go !x !y !z   !count |  (count < blockCubed) =   --- this seems wrong, but whatever
+                                          --- if we hit the bounds all at once, we win!
                          do   
-                            appKernel64 idKernel  x y z  rMat aMat bMat
-                            next x y z (count + 1)
+                            
+                            next x y z 
+                            go (x+4) (y+2) (z+8) (count + 8)
                     | otherwise =  
                             do 
-                                appKernel64 idKernel x y z  rMat  aMat bMat 
+                                appKernel64 basicKernel x y z  rMat  aMat bMat 
                                 return ()
+        theKernel x y z =   appKernel64 basicKernel x y z  rMat  aMat bMat                             
         modN !j = mod j blockedN 
-        next !x !y !z count |  mod count 4 == 0 = go (modN (x+1)) (modN (y+1)) (modN (z+1)) count
-                         | mod count 2 ==0  =  go (modN (x+1)) y (modN (z+1)) count
-                         | otherwise = go x y (modN  (z + 1)) count 
-
+        next !x !y !z  =
+                    do 
+                        theKernel x y z  -- 1
+                        theKernel x y (z + 1) -- 2 
+                        theKernel (x+1) y (z+2) -- 3
+                        theKernel (x+1) y (z+3) -- 4
+                        theKernel (x+2) (y+1) (z+4) -- 5
+                        theKernel (x+2) (y+1) (z+5) -- 6
+                        theKernel (x+3) (y+1) (z+6) -- 7
+                        theKernel (x+3) (y+1) (z+7) -- 8       
+ 
 {-
 Lets unroll the Next code so theres no branches in the incrementation!
 

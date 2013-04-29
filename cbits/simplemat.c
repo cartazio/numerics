@@ -55,7 +55,10 @@ static inline void  SimpleMatMult2x2( doubleAl  *restrict res,
 }
 
 
-void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM){
+void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM
+    // should macroize all the variations so its easier to 
+                    // ,doubleAl *nextRes, doubleAl *nextLeft,doubleAl nextRight
+                    ){
     // double res[16];
     // double leftM[16];
     // double rightM[16];
