@@ -6,6 +6,7 @@
 {-# LANGUAGE MagicHash, UnboxedTuples, DeriveDataTypeable #-}
 {-# LANGUAGE BangPatterns#-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -funbox-strict-fields  #-}
 
 module Numerics.Simple.Bits
     -- this module is changing enough that its not worth
@@ -385,7 +386,21 @@ and what optimizations flags are pased to  llvm
 NOTE: this is actually subtly wrong, 
 -}
 
+{-# INLINE mortonZ64 #-}
+mortonZ64 :: Int -> Int -> Int 
+mortonZ64 !x !y = word2int $! outerShuffle64A $! intPair2Word x y 
+ 
+intPair2Word   !x !y =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF) of 
+                    !res -> res
+            where !xw = int2word x 
+                  !yw = int2word y 
+{-# INLINE intPair2Word #-}    
 
+--word2IntPair :: Word -> (Int,Int )
+--word2IntPair  x y =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF) of 
+--                    !res -> res
+--            where !xw = int2word x 
+--                  !yw = int2word y 
 
 tup2Outer :: TupInt -> Word 
 tup2Outer (TI x y) =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF) of 
