@@ -63,6 +63,7 @@ type Kerfun  b= Int -> Int -> Int->  b
 -- simple looping code
 {--}
 
+{-# INLINE idKernel #-}
 idKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
 idKernel  !aix !bix !cix aMat bMat cMat =  
                          do 
@@ -74,6 +75,7 @@ idKernel  !aix !bix !cix aMat bMat cMat =
                             touch cMat
                             return ()
 
+{-# INLINE simpleLooper #-}
 simpleLooper :: IOVectDouble -> IOVectDouble -> IOVectDouble-> Int  -> IO ()
 simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
     where 
@@ -96,6 +98,7 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
 
 -- this way i can apply prepkernel64 multiple times! 
 -- wh
+{-# INLINE appKernel64  #-}
 appKernel64::  (Int -> Int -> Int ->  b)  -> Int  -> Int -> Int -> b 
 appKernel64 !kerf   = go 
     where 
