@@ -77,7 +77,8 @@ idKernel  !aix !bix !cix aMat bMat cMat =
 simpleLooper :: IOVectDouble -> IOVectDouble -> IOVectDouble-> Int  -> IO ()
 simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
     where 
-        go !x !y !z   !count | x < (n-1) && y < (n-1) && z < (n-1) =  
+        !blockedN = n `div` 4 --- 4x4
+        go !x !y !z   !count | x < (blockedN-1) && y < (blockedN-1) && z < (blockedN-1) =  
                          do   
                             appKernel64 idKernel x y z  rMat aMat bMat
                             next x y z (count + 1)
@@ -85,7 +86,7 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
                             do 
                                 appKernel64 idKernel x y z  rMat  aMat bMat 
                                 return ()
-        modN !j = mod j n 
+        modN !j = mod j blockedN 
         next !x !y !z count |  mod count 4 == 0 = go (modN (x+1)) (modN (y+1)) (modN (z+1)) count
                          | mod count 2 ==0  =  go (modN (x+1)) y (modN (z+1)) count
                          | otherwise = go x y (modN  (z + 1)) count 
