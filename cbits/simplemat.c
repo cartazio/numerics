@@ -100,10 +100,10 @@ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubl
     // speculative next bunch prefetch hinting, using level 2 rather than 3, not sure if theres a diff
     // but gives it lower relative priority
 
-/// I think this causes a seg fault when i do profiling?!
-    __builtin_prefetch(res + 16, 1, 1);
-    __builtin_prefetch(leftM+16,0, 1);
-    __builtin_prefetch(rightM+16,0, 1);
+//  i now can compute the next location stuff, use it in a new version
+    __builtin_prefetch(res + 16, 1, 0);
+    __builtin_prefetch(leftM+16,0, 0);
+    __builtin_prefetch(rightM+16,0, 0);
 
     // __builtin_prefetch(res + 16 + 4, 1, 3);
     // __builtin_prefetch(res + 16 + 8, 1,3);

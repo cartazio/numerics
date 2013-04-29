@@ -386,7 +386,7 @@ and what optimizations flags are pased to  llvm
 NOTE: this is actually subtly wrong, 
 -}
 
-{-# INLINE mortonZ64 #-}
+{-# NOINLINE mortonZ64 #-}
 mortonZ64 :: Int -> Int -> Int 
 mortonZ64 !x !y = word2int $! outerShuffle64A $! intPair2Word y x
 

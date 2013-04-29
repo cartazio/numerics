@@ -93,10 +93,10 @@ type Kerfun  b= Int -> Int -> Int->  b
 idKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
 idKernel  !aix !bix !cix aMat bMat cMat =  
                          do 
-                            touch aix 
-                            touch bix
-                            touch cix 
-                            --quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
+                            --touch aix 
+                            --touch bix
+                            --touch cix 
+                            quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
                             return ()
 
 
@@ -127,7 +127,12 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
                          | mod count 2 ==0  =  go (modN (x+1)) y (modN (z+1)) count
                          | otherwise = go x y (modN  (z + 1)) count 
 
+{-
+Lets unroll the Next code so theres no branches in the incrementation!
 
+
+
+-}
 
 
 -- this way i can apply prepkernel64 multiple times! 
