@@ -105,10 +105,10 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
     where 
         !blockedN = n `div` 4 --- 4x4
         !blockCubed = blockedN * blockedN * blockedN
-        go !x !y !z   !count |   x < (blockedN-1) || y < (blockedN-1) || z < (blockedN-1) 
+        go !x !y !z   !count |  ( x < (blockedN-1) || y < (blockedN-1) || z < (blockedN-1) ) || (count < blockCubed)
                 =  --- if we hit the bounds all at once, we win!
                          do   
-                            appKernel64 idKernel x y z  rMat aMat bMat
+                            appKernel64 idKernel  x y z  rMat aMat bMat
                             next x y z (count + 1)
                     | otherwise =  
                             do 
