@@ -66,32 +66,34 @@ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubl
     // copyFromTo(leftMat,leftM, 16);
     // copyFromTo(rightMat,rightM,16);
 
-    // quadrant 1
-    __builtin_prefetch(leftM+4,0);  // 1
-    __builtin_prefetch(rightM+4,0); // 2
-    SimpleMatMult2x2(res,leftM, rightM);
-
-    __builtin_prefetch(res+4,1);  // 3
-    __builtin_prefetch(rightM+8,0); // 4
-    SimpleMatMult2x2(res, leftM+4,rightM + 4 );
-
-    // quadrant 2
-    __builtin_prefetch(rightM+12,0); // 5
-    SimpleMatMult2x2(res + 4, leftM, rightM + 8);
-    __builtin_prefetch(res+8,1); // 6
-    __builtin_prefetch(leftM+8, 0); // 7
-    SimpleMatMult2x2(res+4, leftM + 4 , rightM + 12);
-
-    //quadrant 3
-    __builtin_prefetch(leftM+12, 0); // 8
-    SimpleMatMult2x2(res + 8, leftM + 8 , rightM);
-    __builtin_prefetch(res + 12,1);  // 9, yes i've done all the prefetches
-    SimpleMatMult2x2(res+8, leftM+12, rightM + 4);
-
-    //quadrant 4
-    SimpleMatMult2x2(res + 12 , leftM+ 8, rightM + 8);
-    SimpleMatMult2x2(res + 12 , leftM + 12, rightM + 12);
-
+    int i = 0;
+    for(i=0;i<4;i++){
+                    // quadrant 1
+                    __builtin_prefetch(leftM+4,0);  // 1
+                    __builtin_prefetch(rightM+4,0); // 2
+                    SimpleMatMult2x2(res,leftM, rightM);
+    
+                    __builtin_prefetch(res+4,1);  // 3
+                    __builtin_prefetch(rightM+8,0); // 4
+                    SimpleMatMult2x2(res, leftM+4,rightM + 4 );
+    
+                    // quadrant 2
+                    __builtin_prefetch(rightM+12,0); // 5
+                    SimpleMatMult2x2(res + 4, leftM, rightM + 8);
+                    __builtin_prefetch(res+8,1); // 6
+                    __builtin_prefetch(leftM+8, 0); // 7
+                    SimpleMatMult2x2(res+4, leftM + 4 , rightM + 12);
+    
+                    //quadrant 3
+                    __builtin_prefetch(leftM+12, 0); // 8
+                    SimpleMatMult2x2(res + 8, leftM + 8 , rightM);
+                    __builtin_prefetch(res + 12,1);  // 9, yes i've done all the prefetches
+                    SimpleMatMult2x2(res+8, leftM+12, rightM + 4);
+    
+                    //quadrant 4
+                    SimpleMatMult2x2(res + 12 , leftM+ 8, rightM + 8);
+                    SimpleMatMult2x2(res + 12 , leftM + 12, rightM + 12);
+    }
     //write the results back, hopefully clang can do the write coalescing this way!!
     // copyFromTo(res,resMat,16);
 
