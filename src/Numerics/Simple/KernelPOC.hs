@@ -123,7 +123,7 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
                          do   
                             
                             next x y z 
-                            go (x+4) (y+2) (z+8) (count + 8)
+                            go (modN $! x+4 ) (modN $! y+2) (modN $! z+8) (count + 8)
                     | otherwise =  
                             do 
                                 appKernel64 basicKernel x y z  rMat  aMat bMat 
