@@ -150,8 +150,8 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
                                 appKernel64 basicKernel x y z  rMat  aMat bMat 
                                 -- its actually correct to do the basic kernel here
                                 return ()
-        {-# NOINLINE theKernel#-}                                
-        theKernel !x !y !z !ashift !bshift !cshift=  do touch x ; touch y ; touch z ; return ()
+        
+        theKernel !x !y !z !ashift !bshift !cshift=  do  return ()
                --(appKernel64 ( appKernel64 prefetchKernel x y z ) (x + ashift) (y +bshift) (z + cshift ) )rMat  aMat bMat                             
 
         modN !j = mod j blockedN 
