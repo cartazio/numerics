@@ -7,6 +7,10 @@ import Data.Primitive
 import Numerics.Simple.Bits
 import Control.Monad.Primitive (touch )
 
+import Foreign.Ptr
+import Foreign
+import Foreign.C.Types
+
 import qualified Data.Vector.Storable.Mutable as SM 
 {-
 
@@ -52,6 +56,26 @@ y+=1 every time 0 = step mode 4
 
 -}
 
+
+foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
+    c_SimpleMatMult4x4 :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
+
+{-# NOINLINE quadDirectSimpleC #-}
+quadDirectSimpleC :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
+quadDirectSimpleC !res !leftM !rightM = 
+    SM.unsafeWith res $! \a -> 
+        SM.unsafeWith leftM $! \b ->
+            SM.unsafeWith rightM $! \c ->  c_SimpleMatMult4x4  (castPtr a)  (castPtr b) (castPtr c)
+
+{-# NOINLINE quadDirectSimpleWithShiftC #-}
+quadDirectSimpleWithShiftC :: Int -> Int -> Int ->  SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
+quadDirectSimpleWithShiftC aix !bix !cix  !res !leftM !rightM  = 
+    SM.unsafeWith res $! \a -> 
+        SM.unsafeWith leftM $! \b ->
+            SM.unsafeWith rightM $! \c ->  
+                c_SimpleMatMult4x4  (a `plusPtr` (16*4* aix))  ( b `plusPtr` (16*4* bix)) (c `plusPtr` (16*4* cix))
+
+
 data OrdinateTriple = OTrip { x :: !Double , y :: !Double , z :: ! Double }
 
 
@@ -63,16 +87,13 @@ type Kerfun  b= Int -> Int -> Int->  b
 -- simple looping code
 {--}
 
+
+---- its not the id kernel!! 
 {-# INLINE idKernel #-}
 idKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
 idKernel  !aix !bix !cix aMat bMat cMat =  
                          do 
-                            touch aix
-                            touch bix
-                            touch cix
-                            touch aMat
-                            touch bMat
-                            touch cMat
+                            quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
                             return ()
 
 {-# INLINE simpleLooper #-}

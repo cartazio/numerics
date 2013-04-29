@@ -25,6 +25,8 @@ import Numerics.Simple.Util
 
 import Control.Monad.Primitive (touch )
 
+import Numerics.Simple.KernelPOC
+
 import Foreign.Ptr
 import Foreign
 import Foreign.C.Types
@@ -113,15 +115,7 @@ unsafeDiceMFlipN (MN v) =
         
 
 
-foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 
-    c_SimpleMatMult4x4 :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
 
-{-# NOINLINE quadDirectSimpleC #-}
-quadDirectSimpleC :: SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
-quadDirectSimpleC !res !leftM !rightM = 
-    SM.unsafeWith res $! \a -> 
-        SM.unsafeWith leftM $! \b ->
-            SM.unsafeWith rightM $! \c ->  c_SimpleMatMult4x4  (castPtr a)  (castPtr b) (castPtr c)
 
 type KerFunType = SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO () 
 
