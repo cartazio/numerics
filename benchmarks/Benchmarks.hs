@@ -50,7 +50,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                     (!cv,!av,!bv)<- return vTup 
                                     dgemmBlockNOOP cv av bv 
                                     ),
-                            bench "POC Loop block  NOOP"  $! whnfIO (
+                            bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
@@ -79,7 +79,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockNOOP cv av bv 
                                         ),
-                            bench "POC Loop block  NOOP"  $! whnfIO (
+                            bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
@@ -109,7 +109,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockNOOP cv av bv 
                                         ),
-                            bench "POC Loop block  NOOP"  $! whnfIO (
+                            bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
@@ -137,7 +137,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
                                             ),
-                            bench "POC Loop block  NOOP"  $! whnfIO (
+                            bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
