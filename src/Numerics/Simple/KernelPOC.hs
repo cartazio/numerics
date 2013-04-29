@@ -145,7 +145,7 @@ Lets unroll the Next code so theres no branches in the incrementation!
 appKernel64::  (Int -> Int -> Int ->  b)  -> Int  -> Int -> Int -> b 
 appKernel64 !kerf   = go 
     where 
-        go !x !y !z  =  kerf ( mortonZ64 x y ) (mortonZ64 z y) (mortonFlipN64 x z )
+        go !x !y !z  = kerf x y z  --- kerf ( mortonZ64 x y ) (mortonZ64 z y) (mortonFlipN64 x z )
 
 type IOVectDouble = SM.IOVector Double 
 
