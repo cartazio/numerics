@@ -100,7 +100,7 @@ idKernel  !aix !bix !cix aMat bMat cMat =
                             --touch aix 
                             --touch bix
                             --touch cix 
-                            quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat                            
+                            quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
                             return ()
 
 
@@ -115,7 +115,7 @@ dumbLooper !rMat !aMat !bMat !n = go 1
 simpleLooper :: IOVectDouble -> IOVectDouble -> IOVectDouble-> Int  -> IO ()
 simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
     where 
-        !blockedN = n `div`  8 ----  8x8   ---4 --- 4x4
+        !blockedN = n `div` 4 --- 4x4
         !blockCubed = blockedN * blockedN * blockedN
         go !x !y !z   !count |  (count < blockCubed)  --- this seems wrong, but whatever
                 =  --- if we hit the bounds all at once, we win!
