@@ -122,6 +122,74 @@ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubl
 
 }
 
+void SimpleMatMult4x4Prefetcher( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM
+    // should macroize all the variations so its easier to 
+                    ,int nextRes, int nextLeft,int nextRight
+                    ){
+    // double res[16];
+    // double leftM[16];
+    // double rightM[16];
+
+// intialize these things
+
+    // copyFromTo(resMat,res,16);
+    // copyFromTo(leftMat,leftM, 16);
+    // copyFromTo(rightMat,rightM,16);
+
+    // quadrant 1
+    // __builtin_prefetch(leftM+4,0);  // 1
+    // __builtin_prefetch(rightM+4,0); // 2
+    SimpleMatMult2x2(res,leftM, rightM);
+
+    // __builtin_prefetch(res+4,1);  // 3
+    // __builtin_prefetch(rightM+8,0); // 4
+    SimpleMatMult2x2(res, leftM+4,rightM + 4 );
+
+    // quadrant 2
+    // __builtin_prefetch(rightM+12,0); // 5
+    SimpleMatMult2x2(res + 4, leftM, rightM + 8);
+    // __builtin_prefetch(res+8,1); // 6
+    // __builtin_prefetch(leftM+8, 0); // 7
+    SimpleMatMult2x2(res+4, leftM + 4 , rightM + 12);
+
+    //quadrant 3
+    // __builtin_prefetch(leftM+12, 0); // 8
+    SimpleMatMult2x2(res + 8, leftM + 8 , rightM);
+    // __builtin_prefetch(res + 12,1);  // 9, yes i've done all the prefetches
+    SimpleMatMult2x2(res+8, leftM+12, rightM + 4);
+
+    //quadrant 4
+    SimpleMatMult2x2(res + 12 , leftM+ 8, rightM + 8);
+    SimpleMatMult2x2(res + 12 , leftM + 12, rightM + 12);
+
+    //write the results back, hopefully clang can do the write coalescing this way!!
+    // copyFromTo(res,resMat,16);
+
+
+
+    // speculative next bunch prefetch hinting, using level 2 rather than 3, not sure if theres a diff
+    // but gives it lower relative priority
+
+//  i now can compute the next location stuff, use it in a new version
+    int i = 0 ;
+    for(i = 0 ; i < 4; i ++)
+        __builtin_prefetch(res + nextRes + (4* i), 1, 0);
+        __builtin_prefetch(leftM+nextLeft+ (4* i),0, 0);
+        __builtin_prefetch(rightM+nextRight+ (4* i),0, 0);
+
+    // __builtin_prefetch(res + 16 + 4, 1, 3);
+    // __builtin_prefetch(res + 16 + 8, 1,3);
+    // __builtin_prefetch(res+ 16 + 12, 1, 3);
+
+    // __builtin_prefetch(leftM + 16 + 4, 0, 3);
+    // __builtin_prefetch(leftM + 16 + 8, 0,3);
+    // __builtin_prefetch(leftM + 16 + 12, 0, 3);
+
+    // __builtin_prefetch(rightM + 16 + 4, 0, 3);
+    // __builtin_prefetch(rightM + 16 + 8, 0,3);
+    // __builtin_prefetch(rightM+ 16 + 12, 0, 3);
+
+}
 
 
 

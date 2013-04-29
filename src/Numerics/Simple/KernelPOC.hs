@@ -77,6 +77,27 @@ quadDirectSimpleWithShiftC aix !bix !cix  !res !leftM !rightM  =
     where 
         !blockSizeBytes = 8 * 4 * 4 -- double is 64bits, 8 bytes, and we are considering 4x4 blocks
 
+
+------------
+-----------
+---- now with prefetching
+
+
+
+foreign import ccall unsafe "simplemat.c SimpleMatMult4x4Prefetcher" 
+    c_SimpleMatMult4x4Prefetcher :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble ->CInt -> CInt -> CInt ->  IO ()
+
+
+{-# NOINLINE quadDirectSimpleWithShiftPrefetcherC #-}
+quadDirectSimpleWithShiftPrefetcherC :: Int -> Int -> Int ->  Int -> Int -> Int ->  SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
+quadDirectSimpleWithShiftPrefetcherC !aix !bix !cix !anext !bnext !cnext !res !leftM !rightM  = 
+    SM.unsafeWith res $! \a -> 
+        SM.unsafeWith leftM $! \b ->
+            SM.unsafeWith rightM $! \c ->  
+                c_SimpleMatMult4x4Prefetcher  (a `plusPtr` (blockSizeBytes* aix))  ( b `plusPtr` (blockSizeBytes* bix)) (c `plusPtr` (blockSizeBytes* cix))  (fromIntegral anext) (fromIntegral bnext) (fromIntegral cnext)
+    where 
+        !blockSizeBytes = 8 * 4 * 4 -- double is 64bits, 8 bytes, and we are considering 4x4 blocks
+
 data OrdinateTriple = OTrip { x :: !Double , y :: !Double , z :: ! Double }
 
 
@@ -96,15 +117,15 @@ type Kerfun  b= Int -> Int -> Int->  b
 ---- its not the id kernel!! 
 {-# INLINE basicKernel #-}
 basicKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
-basicKernel  !aix !bix !cix aMat bMat cMat =  
-                         do 
-                            --touch aix 
-                            --touch bix
-                            --touch cix 
+basicKernel  !aix !bix !cix !aMat !bMat !cMat =    
                             quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
-                            return ()
-
-
+                   
+prefetchKernel :: Int -> Int -> Int->Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
+prefetchKernel !aix !bix !cix !ashift !bshift 
+     !cshift !aMat !bMat !cMat =  
+         quadDirectSimpleWithShiftPrefetcherC aix bix cix  ( ashift - aix) (bshift - bix)  (cshift - cix ) aMat bMat cMat
+         --- i think taking the differences is the correct alg 
+                            
 dumbLooper !rMat !aMat !bMat !n = go 1
     where
         ncube = n * n * n
@@ -118,7 +139,7 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
     where 
         !blockedN = n `div` 4 --- 4x4
         !blockCubed = blockedN * blockedN * blockedN
-        go !x !y !z   !count |  (count < blockCubed) =   --- this seems wrong, but whatever
+        go !x !y !z   !count |  (count < (blockCubed -1)) =   --- this seems wrong, but whatever
                                           --- if we hit the bounds all at once, we win!
                          do   
                             
@@ -127,22 +148,32 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
                     | otherwise =  
                             do 
                                 appKernel64 basicKernel x y z  rMat  aMat bMat 
+                                -- its actually correct to do the basic kernel here
                                 return ()
-        theKernel x y z =   appKernel64 basicKernel x y z  rMat  aMat bMat                             
+        theKernel !x !y !z !ashift !bshift !cshift=  
+               (appKernel64 ( appKernel64 prefetchKernel x y z ) (x + ashift) (y +bshift) (z + cshift ) )rMat  aMat bMat                             
+
         modN !j = mod j blockedN 
         next !x !y !z  =
-                    do 
-                        theKernel x y z  -- 1
-                        theKernel x y (z + 1) -- 2 
-                        theKernel (x+1) y (z+2) -- 3
-                        theKernel (x+1) y (z+3) -- 4
-                        theKernel (x+2) (y+1) (z+4) -- 5
-                        theKernel (x+2) (y+1) (z+5) -- 6
-                        theKernel (x+3) (y+1) (z+6) -- 7
-                        theKernel (x+3) (y+1) (z+7) -- 8       
+                    do  -- prefetch the block after next
+                        theKernel x y z             1 0 2 -- 1
+                        theKernel x y (z + 1)       1 0 3-- 2 
+                        theKernel (x+1) y (z+2)     2 1 4 -- 3
+                        theKernel (x+1) y (z+3)     2 1 5 -- 4
+                        theKernel (x+2) (y+1) (z+4) 3 1 6-- 5
+                        theKernel (x+2) (y+1) (z+5) 3 1 7-- 6
+                        theKernel (x+3) (y+1) (z+6) 4 2 8-- 7
+                        theKernel (x+3) (y+1) (z+7) 4 2 9  -- 8       
+
+--nativeTwoByTwoKernel :: IOVectDouble -> IOVectDouble ->IOVectDouble -> IO ()
+--nativeTwoByTwoKernel r a b =
+    --do  
+
  
 {-
 Lets unroll the Next code so theres no branches in the incrementation!
+
+
 
 
 
