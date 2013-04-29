@@ -88,6 +88,10 @@ type Kerfun  b= Int -> Int -> Int->  b
 {--}
 
 
+--- also should try the recursive one with explicit stacky loop as
+---- data structures or continuations next
+
+
 ---- its not the id kernel!! 
 {-# INLINE idKernel #-}
 idKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
