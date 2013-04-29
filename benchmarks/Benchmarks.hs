@@ -13,7 +13,7 @@ import Data.Foldable
 import AppleBlas
 
 import Numerics.Simple.POC 
-
+import Numerics.Simple.KernelPOC 
 
 whnfIter:: Int ->(a->a)-> a -> Pure 
 whnfIter cnt f  arg = whnf (\v -> foldl' (\ a b -> f a ) v [0 .. cnt]  ) arg
@@ -49,6 +49,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     dgemmBlockNOOP cv av bv 
+                                    ),
+                            bench "POC Loop block  NOOP"  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    simpleLooper cv av bv  localsize
                                     ),                           
                            bench "POC Naive Dot"  $! whnfIO (
                                do  
@@ -74,6 +79,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockNOOP cv av bv 
                                         ),
+                            bench "POC Loop block  NOOP"  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    simpleLooper cv av bv  localsize
+                                    ),
                                     bench "POC Naive Dot"  $! whnfIO (
                                        do  
                                             (!cv,!av,!bv)<- return vTup 
@@ -99,6 +109,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockNOOP cv av bv 
                                         ),
+                            bench "POC Loop block  NOOP"  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    simpleLooper cv av bv  localsize
+                                    ),
                                bench "POC Naive Dot"  $! whnfIO (
                                    do  
                                         (!cv,!av,!bv)<- return vTup 
@@ -122,6 +137,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
                                             ),
+                            bench "POC Loop block  NOOP"  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    simpleLooper cv av bv  localsize
+                                    ),
                                     bench "POC Block NOOP"  $! whnfIO (
                                        do  
                                         (!cv,!av,!bv)<- return vTup 

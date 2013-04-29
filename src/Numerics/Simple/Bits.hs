@@ -388,7 +388,19 @@ NOTE: this is actually subtly wrong,
 
 {-# INLINE mortonZ64 #-}
 mortonZ64 :: Int -> Int -> Int 
-mortonZ64 !x !y = word2int $! outerShuffle64A $! intPair2Word x y 
+mortonZ64 !x !y = word2int $! outerShuffle64A $! intPair2Word y x
+
+{-want that inverseMortonZ 1 = (x=1,y=0), so i need to swap x and y when we mux them together 
+
+need to add these to a test suite!!!!
+-}
+
+
+
+{-# INLINE mortonFlipN64 #-}
+mortonFlipN64 :: Int -> Int -> Int 
+mortonFlipN64 !x !y = word2int $! outerShuffle64A $! intPair2Word x y 
+
  
 intPair2Word   !x !y =  case  ( (xw .&. 0xFFFFFFFF) << 32 ) .|. (yw .&. 0xFFFFFFFF) of 
                     !res -> res
