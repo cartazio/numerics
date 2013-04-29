@@ -54,6 +54,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
+                                    ),
+                            bench "POC dumb loop  "  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    dumbLooper cv av bv  localsize
                                     ),                           
                            bench "POC Naive Dot"  $! whnfIO (
                                do  
@@ -83,6 +88,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
+                                    ),
+                            bench "POC dumb loop  "  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    dumbLooper cv av bv  localsize
                                     ),
                                     bench "POC Naive Dot"  $! whnfIO (
                                        do  
@@ -114,6 +124,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
                                     ),
+                            bench "POC dumb loop  "  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    dumbLooper cv av bv  localsize
+                                    ),
                                bench "POC Naive Dot"  $! whnfIO (
                                    do  
                                         (!cv,!av,!bv)<- return vTup 
@@ -141,6 +156,11 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
+                                    ),
+                            bench "POC dumb loop  "  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    dumbLooper cv av bv  localsize
                                     ),
                                     bench "POC Block NOOP"  $! whnfIO (
                                        do  
