@@ -3,6 +3,8 @@
 
 module Numerics.Simple.KernelPOC where
 
+import Prelude hiding ((>>))
+
 import Data.Primitive 
 import Numerics.Simple.Bits
 import Control.Monad.Primitive (touch )
@@ -12,6 +14,26 @@ import Foreign
 import Foreign.C.Types
 
 import qualified Data.Vector.Storable.Mutable as SM 
+
+import qualified  Data.Vector.Generic.Mutable as GM 
+import qualified  Data.Vector.Unboxed.Mutable as UM 
+
+
+data Quad a = QD {q1:: !a, q2::  !a,q3:: !a,q4:: !a}
+{-
+layout is interpreted to be
+
+q1, q2
+q3, q4
+ 
+-}
+
+
+newtype MortonZ a = MZ a
+
+-- well its upside down N, but whatever
+newtype MortonN a = MN a
+
 {-
 
 For matrix mult
@@ -166,20 +188,51 @@ simpleLooper !rMat !aMat !bMat !n = go 0 0 0  0  --- we're about to run step 0!!
                         theKernel (x+3) (y+1) (z+6) 4 2 8-- 7
                         theKernel (x+3) (y+1) (z+7) 4 2 9  -- 8       
 
---nativeTwoByTwoKernel :: IOVectDouble -> IOVectDouble ->IOVectDouble -> IO ()
---nativeTwoByTwoKernel r a b =
-    --do  
+--{-# INLINABLE nativeTwoByTwoMMultKernelFunc #-}
+--nativeTwoByTwoMMultKernelFunc :: IOVectDouble ->IOVectDouble -> IO (Quad Double) 
+--nativeTwoByTwoMMultKernelFunc leftMat rightMat =
+--            do 
+--                leftMatQ1 <- SM.unsafeIndex  leftMat 0
+--                rightMatQ1 <- SM.unsafeIndex rightMat 0
+--                leftMatQ2 <- SM.unsafeIndex leftMat 1 
+--                rightMatQ2 <- S
 
+{-# INLINE project2x2matrixMortonZ #-}  --- mortonZ in the 2x2 case is also row major
+project2x2matrixMortonZ :: IOVectDouble -> IO (MortonZ (Quad Double))
+project2x2matrixMortonZ mat =
+        do 
+            mq1 <- SM.unsafeRead mat 0
+            mq2 <- SM.unsafeRead mat 1
+            mq3 <- SM.unsafeRead mat 2 
+            mq4 <- SM.unsafeRead mat 3
+            return (MZ (QD mq1 mq2 mq3 mq4))
+
+{-# INLINE project2x2matrixMortonFlipN #-}  --- mortonZ in the 2x2 case is also row major
+project2x2matrixMortonFlipN :: IOVectDouble -> IO (MortonN (Quad Double))
+project2x2matrixMortonFlipN mat =
+        do 
+            mq1 <- SM.unsafeRead mat 0
+            mq2 <- SM.unsafeRead mat 2
+            mq3 <- SM.unsafeRead mat 1             
+            mq4 <- SM.unsafeRead mat 3
+            return (MN (QD mq1 mq2 mq3 mq4))            
  
-{-
-Lets unroll the Next code so theres no branches in the incrementation!
+{-# INLINE project2x2MatrixMultMzMnMz #-}
+project2x2MatrixMultMzMnMz :: (MortonZ (Quad Double)) -> (MortonN (Quad Double) ) -> MortonZ (Quad Double)
+project2x2MatrixMultMzMnMz (MZ leftQMZ) (MN rightQMN) =
+    MZ (QD (q1 leftQMZ * q1 rightQMN + q2 leftQMZ * q3 rightQMN ) 
+            (q1 leftQMZ * q2 rightQMN + q2 leftQMZ * q4 rightQMN ) 
+            (q3 leftQMZ * q1 rightQMN + q4 leftQMZ * q3 rightQMN )
+            (q3 leftQMZ * q2 rightQMN + q4 leftQMZ * q4 rightQMN )  )
 
+{-# INLINE  merge2x2QuadsMortonZ #-}
+merge2x2QuadsMortonZ :: MortonZ(Quad Double) ->MortonZ (Quad Double) -> MortonZ (Quad Double)
+merge2x2QuadsMortonZ (MZ !left) (MZ !right) =
+  MZ $! QD (q1 left + q1 right) (q2 left + q2 right )
+            (q3 left + q3 right )  (q4 left + q4 right)
 
-
-
-
--}
-
+write2x2QuadMZ :: IOVectDouble -> MortonZ (Quad Double) -> IO ()
+write2x2QuadMZ = undefined
 
 -- this way i can apply prepkernel64 multiple times! 
 -- wh
@@ -192,8 +245,106 @@ appKernel64 !kerf   = go
 type IOVectDouble = SM.IOVector Double 
 
 
-{-
-we have variables a,b,c
-which correspond to the 
-for simplicity lets con
--}
+
+{-# INLINE unsafeDiceMZ #-}
+unsafeDiceMZ
+  :: MortonZ (SM.IOVector Double) -> Quad (MortonZ (SM.IOVector Double))
+unsafeDiceMZ  (MZ v) = 
+        QD  (MZ $! SM.unsafeSlice q1Base len v )
+            (MZ $! SM.unsafeSlice q2Base len v )
+            (MZ $! SM.unsafeSlice q3Base len v )
+            (MZ $! SM.unsafeSlice q4Base len  v )
+    where
+        !len = (parentLength ) >> 2 ---  divide by 4, should do with shifts
+        !parentLength = (SM.length v )
+        !q1Base = 0
+        !q2Base = len 
+        !q3Base = len  << 1     --- 2* len 
+        !q4Base = parentLength - len   --- (4*len - len )
+        
+
+{-# INLINE unsafeDiceMFlipN #-}
+unsafeDiceMFlipN
+  ::   MortonN (SM.IOVector Double) -> Quad (MortonN (SM.IOVector Double))
+unsafeDiceMFlipN (MN v) =  
+        QD  (MN $! SM.unsafeSlice q1Base len v )
+            (MN $! SM.unsafeSlice q2Base len  v )
+            (MN $! SM.unsafeSlice q3Base len  v )
+            (MN $! SM.unsafeSlice q4Base len  v )
+    where
+        !len = (parentLength ) >>2 ---  divide by 4
+        !parentLength = (SM.length v )
+        !q1Base = 0
+        !q2Base = len << 1   --- MN same as MZ but with the base index for q2 and q3 swapped
+        !q3Base = len    
+        !q4Base = parentLength - len    --- (4*len - len )
+        
+
+-- i'm fed 3 2x2 matrices, i'll work on reading / writing them directly
+
+--- INLINE , hopefully that + llvm bb vectorization work well
+{-# INLINE unsafeDirect2x2MzMnMzStorable #-}
+unsafeDirect2x2MzMnMzStorable ::  MortonZ (SM.IOVector Double)-> 
+        MortonZ (SM.IOVector Double)->MortonN (SM.IOVector Double)-> IO ()
+unsafeDirect2x2MzMnMzStorable (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
+        do 
+            l0  <- SM.unsafeRead  leftReadMat  0
+            l1 <- SM.unsafeRead  leftReadMat 1
+            r0 <- SM.unsafeRead rightReadMat 0
+            r1 <- SM.unsafeRead rightReadMat 1
+
+            res0 <- SM.unsafeRead resMat 0
+            SM.unsafeWrite resMat 0 $! (l0 * r0 + l1 * r1 + res0)
+
+            r2 <- SM.unsafeRead rightReadMat 2 
+            r3 <- SM.unsafeRead rightReadMat 3
+
+            res1 <- SM.unsafeRead resMat 1
+
+            SM.unsafeWrite resMat 1 $! (l0 * r2 + l1 * r3 + res1)            
+
+
+            l2 <-SM.unsafeRead leftReadMat 2
+            l3 <- SM.unsafeRead leftReadMat 3
+
+            res2 <- SM.unsafeRead resMat 2
+            res3 <- SM.unsafeRead resMat 3
+
+            SM.unsafeWrite resMat 2 $! (l2 * r0 + l3 * r1 + res2)
+            SM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
+
+            -- these are all register friendly right?
+            return ()
+
+unsafeDirect2x2MzMnMzUnbox ::  MortonZ (UM.IOVector Double)-> 
+        MortonZ (UM.IOVector Double)->MortonN (UM.IOVector Double)-> IO ()
+unsafeDirect2x2MzMnMzUnbox (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
+        do 
+            l0  <- UM.unsafeRead  leftReadMat  0
+            l1 <- UM.unsafeRead  leftReadMat 1
+            r0 <- UM.unsafeRead rightReadMat 0
+            r1 <- UM.unsafeRead rightReadMat 1
+
+            res0 <- UM.unsafeRead resMat 0
+            UM.unsafeWrite resMat 0 $! (l0 * r0 + l1 * r1 + res0)
+
+            r2 <- UM.unsafeRead rightReadMat 2 
+            r3 <- UM.unsafeRead rightReadMat 3
+
+            res1 <- UM.unsafeRead resMat 1
+
+            UM.unsafeWrite resMat 1 $! (l0 * r2 + l1 * r3 + res1)
+
+            l2 <-UM.unsafeRead leftReadMat 2
+            l3 <- UM.unsafeRead leftReadMat 3
+
+            res2 <- UM.unsafeRead resMat 2
+            res3 <- UM.unsafeRead resMat 3
+
+            UM.unsafeWrite resMat 2 $! (l2 * r0 + l3 * r1 + res2)
+            UM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
+
+            -- these are all register friendly right?
+            -- need to try this unboxed version out shortly
+            return ()
+

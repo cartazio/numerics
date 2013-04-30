@@ -50,12 +50,7 @@ q3 | q4
 -}
 --- lets just use the data.vector.storable unsafe slice internall
 
-data Quad a = QD {q1:: !a,q2::  !a,q3:: !a,q4:: !a}
 
-newtype MortonZ a = MZ a
-
--- well its upside down N, but whatever
-newtype MortonN a = MN a
 
 {-
 here we assume resMat and LeftMat are row maj and rightMat is column major
@@ -80,39 +75,6 @@ dotMMultStorable !resMat !leftMat !rightMat !n =
                                     return ()
                     ))
 
-{-# INLINE unsafeDiceMZ #-}
-unsafeDiceMZ
-  :: MortonZ (SM.IOVector Double) -> Quad (MortonZ (SM.IOVector Double))
-unsafeDiceMZ  (MZ v) = 
-        QD  (MZ $! SM.unsafeSlice q1Base len v )
-            (MZ $! SM.unsafeSlice q2Base len v )
-            (MZ $! SM.unsafeSlice q3Base len v )
-            (MZ $! SM.unsafeSlice q4Base len  v )
-    where
-        !len = (parentLength ) >> 2 ---  divide by 4, should do with shifts
-        !parentLength = (GM.length v )
-        !q1Base = 0
-        !q2Base = len 
-        !q3Base = len  << 1     --- 2* len 
-        !q4Base = parentLength - len   --- (4*len - len )
-        
-
-{-# INLINE unsafeDiceMFlipN #-}
-unsafeDiceMFlipN
-  ::   MortonN (SM.IOVector Double) -> Quad (MortonN (SM.IOVector Double))
-unsafeDiceMFlipN (MN v) =  
-        QD  (MN $! SM.unsafeSlice q1Base len v )
-            (MN $! SM.unsafeSlice q2Base len  v )
-            (MN $! SM.unsafeSlice q3Base len  v )
-            (MN $! SM.unsafeSlice q4Base len  v )
-    where
-        !len = (parentLength ) >>2 ---  divide by 4
-        !parentLength = (GM.length v )
-        !q1Base = 0
-        !q2Base = len << 1   --- MN same as MZ but with the base index for q2 and q3 swapped
-        !q3Base = len    
-        !q4Base = parentLength - len    --- (4*len - len )
-        
 
 
 
@@ -310,74 +272,6 @@ unsafeQuadDirectMzMn2MzMMultStorable  resQuad readLQuad  readRQuad=
 
 
 
-
--- i'm fed 3 2x2 matrices, i'll work on reading / writing them directly
-
---- INLINE , hopefully that + llvm bb vectorization work well
-{-# INLINE unsafeDirect2x2MzMnMzStorable #-}
-unsafeDirect2x2MzMnMzStorable ::  MortonZ (SM.IOVector Double)-> 
-        MortonZ (SM.IOVector Double)->MortonN (SM.IOVector Double)-> IO ()
-unsafeDirect2x2MzMnMzStorable (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
-        do 
-            l0  <- SM.unsafeRead  leftReadMat  0
-            l1 <- SM.unsafeRead  leftReadMat 1
-            r0 <- SM.unsafeRead rightReadMat 0
-            r1 <- SM.unsafeRead rightReadMat 1
-
-            res0 <- SM.unsafeRead resMat 0
-            SM.unsafeWrite resMat 0 $! (l0 * r0 + l1 * r1 + res0)
-
-            r2 <- SM.unsafeRead rightReadMat 2 
-            r3 <- SM.unsafeRead rightReadMat 3
-
-            res1 <- SM.unsafeRead resMat 1
-
-            SM.unsafeWrite resMat 1 $! (l0 * r2 + l1 * r3 + res1)            
-
-
-            l2 <-SM.unsafeRead leftReadMat 2
-            l3 <- SM.unsafeRead leftReadMat 3
-
-            res2 <- SM.unsafeRead resMat 2
-            res3 <- SM.unsafeRead resMat 3
-
-            SM.unsafeWrite resMat 2 $! (l2 * r0 + l3 * r1 + res2)
-            SM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
-
-            -- these are all register friendly right?
-            return ()
-
-unsafeDirect2x2MzMnMzUnbox ::  MortonZ (UM.IOVector Double)-> 
-        MortonZ (UM.IOVector Double)->MortonN (UM.IOVector Double)-> IO ()
-unsafeDirect2x2MzMnMzUnbox (MZ resMat) (MZ leftReadMat) (MN rightReadMat) = 
-        do 
-            l0  <- UM.unsafeRead  leftReadMat  0
-            l1 <- UM.unsafeRead  leftReadMat 1
-            r0 <- UM.unsafeRead rightReadMat 0
-            r1 <- UM.unsafeRead rightReadMat 1
-
-            res0 <- UM.unsafeRead resMat 0
-            UM.unsafeWrite resMat 0 $! (l0 * r0 + l1 * r1 + res0)
-
-            r2 <- UM.unsafeRead rightReadMat 2 
-            r3 <- UM.unsafeRead rightReadMat 3
-
-            res1 <- UM.unsafeRead resMat 1
-
-            UM.unsafeWrite resMat 1 $! (l0 * r2 + l1 * r3 + res1)
-
-            l2 <-UM.unsafeRead leftReadMat 2
-            l3 <- UM.unsafeRead leftReadMat 3
-
-            res2 <- UM.unsafeRead resMat 2
-            res3 <- UM.unsafeRead resMat 3
-
-            UM.unsafeWrite resMat 2 $! (l2 * r0 + l3 * r1 + res2)
-            UM.unsafeWrite resMat 3 $! (l2 * r2 + l3 * r3 + res3)
-
-            -- these are all register friendly right?
-            -- need to try this unboxed version out shortly
-            return ()
 
 
 
