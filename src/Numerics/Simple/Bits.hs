@@ -339,6 +339,21 @@ outerUnShuffle32B !x =
                 !res -> res 
 
 
+{-NOTE
+partial unshuffle 63, 
+-}
+
+
+--partialUnshuffle63
+
+
+
+-- just 21 copies of (289) in hex! for the 21 bits in the locations 3n for n = 0 ... 21
+-- 289289 is the repeating 3bytes, have the top byte be 0x12 to NOT grab the 64th bit
+threeN1Mask = 0X1289289289289289
+
+
+
 
 --{-# SPECIALIZE outerUnShuffle64 :: Word->Word #-}
 --{-# SPECIALIZE outerUnShuffle64 :: Int->Int #-}
@@ -394,7 +409,6 @@ mortonZ64 !x !y = word2int $! outerShuffle64A $! intPair2Word y x
 
 need to add these to a test suite!!!!
 -}
-
 
 
 {-# INLINE mortonFlipN64 #-}
