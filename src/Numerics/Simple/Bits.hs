@@ -348,9 +348,10 @@ partial unshuffle 63,
 
 
 
--- just 21 copies of (289) in hex! for the 21 bits in the locations 3n for n = 0 ... 21
+-- just 14 copies of (249) in hex! for the 21 bits in the locations 3n for n = 0 ... 21
 -- 289289 is the repeating 3bytes, have the top byte be 0x12 to NOT grab the 64th bit
-threeN1Mask = 0X1289289289289289
+-- 249  is 1.5 bytes ( so repeat 5 times then put a 1 rather than 9 at the top to evade)
+threeN1Mask = 0x1249249249249249 
 
 
 
