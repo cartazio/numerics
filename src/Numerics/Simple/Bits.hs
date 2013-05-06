@@ -351,10 +351,59 @@ partial unshuffle 63,
 -- just 14 copies of (249) in hex! for the 21 bits in the locations 3n for n = 0 ... 21
 -- 289289 is the repeating 3bytes, have the top byte be 0x12 to NOT grab the 64th bit
 -- 249  is 1.5 bytes ( so repeat 5 times then put a 1 rather than 9 at the top to evade)
+{-
+0x9 == 0b1001
+0x4== 0b0100
+0x2 == 0b0010
+0x1== 0b0001
+0x8== 0b1000
+-}
+
+threeN1Mask :: Int
 threeN1Mask = 0x1249249249249249 
 
+bits4Trip :: Int 
+bits4Trip = 0x249
+{-
+for my "standard"  morton order, i've indices x,y,z
+
+in order from highest order bits to least its y > x > z
+ie 
+z starts at position 0,
+x at position 1
+y at position 2
+-}
 
 
+
+splitJoinMorton :: Int -> (# Int, Int, Int  #)
+splitJoinMorton !muxed = 
+     case (#  muxed .&. threeN1Mask,  (muxed >> 1) .&. threeN1Mask , (muxed >> 2) .&. threeN1Mask  #)  of
+        (# ztrip, xtrip, ytrip #) -> 
+            case (# trip2doub ztrip, trip2doub xtrip, trip2doub ytrip #) of 
+                x -> x
+
+{-
+basically map for n = 0 ... 20 
+the bits at positions 3n to position n.
+Lets do this as a log_2 20 depth circuit, so essentially 5 "sequential"
+steps 
+
+
+-}
+
+
+{-# INLINE trip2doub #-}
+trip2doub :: Int -> Int
+trip2doub !x = 
+
+
+--trip2doub !x = 
+--        case foldl' (\ ( !accum, !thisIx ) !nextVal ->   
+--                        ( accum .|. (( bit (3 * thisIx) .&. x ) >> thisIx) ,thisIx + 1 ))  ( 0,0) thelist    of
+--            (!xDouble,_ ) -> xDouble
+--    where !thelist = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+-- need to make sure this get compiled well!
 
 --{-# SPECIALIZE outerUnShuffle64 :: Word->Word #-}
 --{-# SPECIALIZE outerUnShuffle64 :: Int->Int #-}
