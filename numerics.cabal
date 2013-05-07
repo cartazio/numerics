@@ -64,7 +64,7 @@ library
   -- Modules included in this library but not exported.
   -- other-modules:       
 
-    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -w  -optc "-msse4.2"  -optlo "-std-compile-opts" -optlo  "-march=corei7"  -fllvm-tbaa
+    ghc-options: -O2 -fllvm -optlo "-O3"  -optlc "-O3" -w  -optc "-msse4.2"  -optlo "-std-compile-opts" -optlo  "-regalloc=pbqp"  -fllvm-tbaa
 
 
     -- should probably have tests for both threaded  and unthreaded cases  
@@ -110,7 +110,7 @@ benchmark benchmarks
     main-is: Benchmarks.hs
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
-    ghc-options: -O2 -fllvm -optlo "-O3"    -optlc "-O3" -optlo "-std-compile-opts" -optlo  "-march=corei7"   -optc "-msse4.2"  -optlo "-bb-vectorize"  -rtsopts -threaded -with-rtsopts=-N2  -fllvm-tbaa
+    ghc-options: -O2 -fllvm -optlo "-O3"    -optlc "-O3" -optlo "-std-compile-opts"    -optc "-msse4.2"  -optlo "-bb-vectorize"  -rtsopts -threaded -with-rtsopts=-N2  -fllvm-tbaa -optlo  "-regalloc=pbqp" 
 
     --- -static -fprof-auto   
             --  -threaded -rtsopts -with-rtsopts=-N2    

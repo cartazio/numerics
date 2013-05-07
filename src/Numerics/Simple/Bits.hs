@@ -355,9 +355,23 @@ partial unshuffle 63,
 0x9 == 0b1001
 0x4== 0b0100
 0x2 == 0b0010
-0x1== 0b0001
-0x8== 0b1000
+0x1== 0b0001 -- used for the last relevant bit at the end of the word 
+
+0x8== 0b1000 -- no use here
 -}
+
+
+--- zeros out the bits that aren't in the range lo ... hi - 1 
+--- viewing the bits as 0 indexed ... something looks wrong though...
+--- requires lo >= 0
+{-# INLINE maskInterval #-}
+maskInterval :: Int -> Int -> Int -> Int 
+maskInterval !lo !hi !x =  
+        case  x .&. (hiMask - lowMask) of 
+                    !res -> res 
+    where
+        !lowMask = (1 << lo ) -1 -- this won't work 
+        !hiMask = (1 << hi) -1   -- (sets bits 0 ... hi - to 1)
 
 threeN1Mask :: Int
 threeN1Mask = 0x1249249249249249 
@@ -374,6 +388,19 @@ x at position 1
 y at position 2
 -}
 
+fromTrip2Double !x = undefined
+
+{-# INLINE nibT2D #-}
+nibT2D !x !shift =
+    case x >> (12 * shift) of
+        !adjX -> case fromTrip2Double adjX of 
+            !reshift -> (reshift << (shift * 8 ))
+
+
+normalizeWordTripAsDouble !x =
+    case nibT2D x 0 .|. nibT2D x 1 .|. nibT2D x 2 
+        .|. nibT2D x 3 .|. nibT2D x 4 .|. nibT2D x 5 of 
+        !res -> res 
 
 
 splitJoinMorton :: Int -> (# Int, Int, Int  #)
@@ -395,7 +422,7 @@ steps
 
 {-# INLINE trip2doub #-}
 trip2doub :: Int -> Int
-trip2doub !x = 
+trip2doub !x =  undefined
 
 
 --trip2doub !x = 
