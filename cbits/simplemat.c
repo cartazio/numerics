@@ -34,6 +34,7 @@ stride of 1, ie no bs!
 */
 
 #define restrict __restrict
+
 typedef  __attribute__((__aligned__(16)))  double doubleAl; 
 
 static inline void  SimpleMatMult2x2( doubleAl  *restrict res,
@@ -172,11 +173,11 @@ void SimpleMatMult4x4Prefetcher( doubleAl * restrict res,doubleAl * restrict lef
 
 //  i now can compute the next location stuff, use it in a new version
     int i = 0 ;
-    for(i = 0 ; i < 4; i ++)
+    for(i = 0 ; i < 4; i ++){
         __builtin_prefetch(res + nextRes + (4* i), 1, 0);
         __builtin_prefetch(leftM+nextLeft+ (4* i),0, 0);
         __builtin_prefetch(rightM+nextRight+ (4* i),0, 0);
-
+    }
     // __builtin_prefetch(res + 16 + 4, 1, 3);
     // __builtin_prefetch(res + 16 + 8, 1,3);
     // __builtin_prefetch(res+ 16 + 12, 1, 3);
@@ -191,5 +192,21 @@ void SimpleMatMult4x4Prefetcher( doubleAl * restrict res,doubleAl * restrict lef
 
 }
 
+void SimpleRowRowColMatrixMultViaDots(doubleAl  *restrict  res,doubleAl   *restrict  leftM,  doubleAl   *restrict rightM , int nSize   ){
+    int row = 0 ;
+    int col = 0;
+    int ix = 0;
+    double accum = 0.0; 
+    for(row = 0 ; row < nSize ; row ++ ){
+        for(col=0; col < nSize ; col ++){
+            accum = 0.0; 
+            for(ix = 0 ;  ix < nSize; ix ++ ){
+                accum += leftM[row + ix * nSize] *  rightM[col +  nSize * ix]; 
+            }
+            res[row + nSize * col] = accum ;
+        }
 
 
+    }
+
+}
