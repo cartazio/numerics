@@ -92,7 +92,7 @@ library
                     transformers >= 0.3.0.0,
                     primitive >= 0.5.0.0 && < 0.6
 
-
+    --x-cc-name: gcc 
     c-sources: cbits/prefetch.c
                 cbits/simplemat.c
     cc-options: -march=corei7-avx -mavx
@@ -111,7 +111,7 @@ benchmark benchmarks
     type: exitcode-stdio-1.0
     --- not sure if the "-bb-vectorize" llvm opt pragma is a good idea or no
     ghc-options: -O2 -fllvm -optlo "-O3"    -optlc "-O3" -optlo "-std-compile-opts"      -optlo "-bb-vectorize"  -rtsopts -threaded -with-rtsopts=-N2  -fllvm-tbaa -optlo  "-regalloc=pbqp" 
-
+    --x-cc-name: gcc 
     --- -static -fprof-auto   
             --  -threaded -rtsopts -with-rtsopts=-N2    
     c-sources:  cbits/testAppleBLAS.c 
