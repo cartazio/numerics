@@ -1,22 +1,14 @@
-// #include<immintrin.h>
+
+// #include <emmintrin.h>
+#include <immintrin.h>
+// #if defined (__SSE4_2__) || defined (__SSE4_1__)
+// for some reason i can't get anything newer than sse4.2 work with both gcc-clang and clang
+ // #include <smmintrin.h>
+// #endif
 
 
 //    __builtin_prefetch(&a, rw, locality);
-/******
-compatible with both clang and gcc
 
-&a is the address of a >=32byte cache line (64bytes on most modern intel chips)
-rw is 0,1 valued, 0 denotes read only location, 1 denotes writing to location
-locality takes the values 0,1,2,3 which are hints about how much locality
-
-quoting the gcc manual:
-
-This function is used to minimize cache-miss latency by moving data into a cache before it is accessed. You can insert calls to __builtin_prefetch into code for which you know addresses of data in memory that is likely to be accessed soon. If the target supports them, data prefetch instructions are generated. If the prefetch is done early enough before the access then the data will be in the cache by the time it is accessed.
-
-The value of addr is the address of the memory to prefetch. There are two optional arguments, rw and locality. The value of rw is a compile-time constant one or zero; one means that the prefetch is preparing for a write to the memory address and zero, the default, means that the prefetch is preparing for a read. The value locality must be a compile-time constant integer between zero and three. A value of zero means that the data has no temporal locality, so it need not be left in the cache after the access. A value of three means that the data has a high degree of temporal locality and should be left in all levels of cache possible. Values of one and two mean, respectively, a low or moderate degree of temporal locality. The default is three.
-
-
-******/
 
 /*
     likewise, approach things as follow:
@@ -33,7 +25,40 @@ stride of 1, ie no bs!
 
 */
 
+// typedef __v4df vec4df ;
+// typedef __v2df vec2df ; 
+// typedef double scalarDouble;
+
+
+/*
+
+-- aligned packed load
+__m128d _mm_load_pd (double const * p);
+
+--aligned packed store
+ __mm_store_pd(double * p, __m128d a);
+
+--add
+ __m128d _mm_add_pd (__m128d a, __m128d b)
+
+--- mult
+ __m128d _mm_mul_pd (m128d a, m128d b)
+
+-- dot product
+ __m128d _mm_dp_pd ( __m128d a, __m128d b, const int mask);
+*/
 #define restrict __restrict
+
+/*
+__m256d
+
+
+DPPD: __m128d _mm_dp_pd ( __m128d a, __m128d b, const int mask);
+*/
+
+__m256d avxid( __m256d in){
+    return in ; 
+}
 
 typedef  __attribute__((__aligned__(16)))  double doubleAl; 
 
