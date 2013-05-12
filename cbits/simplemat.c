@@ -56,13 +56,13 @@ __m256d
 DPPD: __m128d _mm_dp_pd ( __m128d a, __m128d b, const int mask);
 */
 
-__m256d avxid( __m256d in){
+__v4df avxid(__v4df in){
     return in ; 
 }
 
 typedef  __attribute__((__aligned__(16)))  double doubleAl; 
 
-static inline void  SimpleMatMult2x2( doubleAl  *restrict res,
+inline void  SimpleMatMult2x2( doubleAl  *restrict res,
      doubleAl *restrict leftM, doubleAl *restrict rightM){
         res[0] = res[0] +( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
         res[1] = res[1] +(leftM[0] * rightM[2] + leftM[1] * rightM[3]);
@@ -81,19 +81,19 @@ static inline void  SimpleMatMult2x2( doubleAl  *restrict res,
 }
 
 
-void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM
+void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF
     // should macroize all the variations so its easier to 
                     // ,doubleAl *nextRes, doubleAl *nextLeft,doubleAl nextRight
                     ){
-    // double res[16];
-    // double leftM[16];
-    // double rightM[16];
+    double res[16];
+    double leftM[16];
+    double rightM[16];
 
 // intialize these things
 
-    // copyFromTo(resMat,res,16);
-    // copyFromTo(leftMat,leftM, 16);
-    // copyFromTo(rightMat,rightM,16);
+    // copyFromTo(resF,res,16);
+    // copyFromTo(leftMatF,leftM, 16);
+    // copyFromTo(rightMatF,rightM,16);
 
     // quadrant 1
     __builtin_prefetch(leftM+4,0);  // 1
@@ -122,7 +122,7 @@ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubl
     SimpleMatMult2x2(res + 12 , leftM + 12, rightM + 12);
 
     //write the results back, hopefully clang can do the write coalescing this way!!
-    // copyFromTo(res,resMat,16);
+    copyFromTo(res,resF,16);
 
 
 
