@@ -56,7 +56,7 @@ __m256d
 DPPD: __m128d _mm_dp_pd ( __m128d a, __m128d b, const int mask);
 */
 
-__v4df avxid(__v4df in){
+__m256d avxid(__m256d in){
     return in ; 
 }
 
