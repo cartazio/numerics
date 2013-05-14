@@ -100,25 +100,7 @@ quadDirectSimpleWithShiftC aix !bix !cix  !res !leftM !rightM  =
         !blockSizeBytes = 8 * 4 * 4 -- double is 64bits, 8 bytes, and we are considering 4x4 blocks
 
 
-------------
------------
----- now with prefetching
 
-
-
-foreign import ccall unsafe "simplemat.c SimpleMatMult4x4Prefetcher" 
-    c_SimpleMatMult4x4Prefetcher :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble ->CInt -> CInt -> CInt ->  IO ()
-
-
---{-# NOINLINE quadDirectSimpleWithShiftPrefetcherC #-}
---quadDirectSimpleWithShiftPrefetcherC :: Int -> Int -> Int ->  Int -> Int -> Int ->  SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> IO ()
---quadDirectSimpleWithShiftPrefetcherC !aix !bix !cix !anext !bnext !cnext !res !leftM !rightM  = 
---    SM.unsafeWith res $! \a -> 
---        SM.unsafeWith leftM $! \b ->
---            SM.unsafeWith rightM $! \c ->  
---                c_SimpleMatMult4x4Prefetcher  (a `plusPtr` (blockSizeBytes* aix))  ( b `plusPtr` (blockSizeBytes* bix)) (c `plusPtr` (blockSizeBytes* cix))  (fromIntegral anext) (fromIntegral bnext) (fromIntegral cnext)
---    where 
---        !blockSizeBytes = 8 * 4 * 4 -- double is 64bits, 8 bytes, and we are considering 4x4 blocks
 
 data OrdinateTriple = OTrip { x :: !Double , y :: !Double , z :: ! Double }
 
@@ -142,11 +124,7 @@ basicKernel :: Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -
 basicKernel  !aix !bix !cix !aMat !bMat !cMat =    
                             quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
                    
---prefetchKernel :: Int -> Int -> Int->Int -> Int -> Int->IOVectDouble -> IOVectDouble -> IOVectDouble -> IO ()
---prefetchKernel !aix !bix !cix !ashift !bshift 
---     !cshift !aMat !bMat !cMat =  
---         quadDirectSimpleWithShiftPrefetcherC aix bix cix  ( ashift - aix) (bshift - bix)  (cshift - cix ) aMat bMat cMat
---         --- i think taking the differences is the correct alg 
+
                             
 dumbLooper !rMat !aMat !bMat !n = go 1
     where
