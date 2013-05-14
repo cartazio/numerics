@@ -18,7 +18,7 @@ import Numerics.Simple.KernelPOC
 whnfIter:: Int ->(a->a)-> a -> Pure 
 whnfIter cnt f  arg = whnf (\v -> foldl' (\ a b -> f a ) v [0 .. cnt]  ) arg
 
-main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
+main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
     bgroup "Morton Z" [
     {-bgroup "morton" $!-} bcompare [ bench "outerShuffle64B 1000" $! whnfIter 1000 outerShuffle64B 7, bench "outerShuffle64A 1000" $! whnfIter 1000 outerShuffle64A 7  , bench "addingNumbersIter1000" $! whnfIter 1000 ( (7 + ):: Word->Word)  9 ,
         bench "outerUnShuffle64B 1000" $! whnfIter 1000 outerUnShuffle64B 7 ,
@@ -59,12 +59,8 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     dumbLooper cv av bv  localsize
-                                    ),                           
-                           bench "POC Naive Dot"  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    dotMMultStorable cv av bv  localsize
-                                    ) ]] )
+                                    )
+                                     ]] )
        ,bgroup "In L2,  2^16 each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
@@ -88,17 +84,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
-                                    ),
-                            bench "POC dumb loop  "  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    dumbLooper cv av bv  localsize
-                                    ),
-                                    bench "POC Naive Dot"  $! whnfIO (
-                                       do  
-                                            (!cv,!av,!bv)<- return vTup 
-                                            dotMMultStorable cv av bv  localsize
-                                            )
+                                    ) 
                                ]] )
         ,bgroup "In L3 2^18 each "  
            ( let    vTup=pureMkCAB powIx  
@@ -128,12 +114,8 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     dumbLooper cv av bv  localsize
-                                    ),
-                               bench "POC Naive Dot"  $! whnfIO (
-                                   do  
-                                        (!cv,!av,!bv)<- return vTup 
-                                        dotMMultStorable cv av bv  localsize
-                                        )]] )
+                                    )
+                               ]] )
 
 {-
 2^(23) * 3 bytes
@@ -167,12 +149,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 10} (return ()) [
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockNOOP cv av bv 
                                         ) 
-                                   --,
-                                   --bench "POC Naive Dot"  $! whnfIO (
-                                   --    do  
-                                   --         (!cv,!av,!bv)<- return vTup 
-                                   --         dotMMultStorable cv av bv  localsize
-                                   --         )
+                            
                                    ]] )               
 
             --,bgroup "beyond l3,  2^24 each, > 50mb total "  
