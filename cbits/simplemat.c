@@ -35,12 +35,13 @@ typedef  __attribute__((__aligned__(16)))  double doubleAl;
 
 BLENDPD: __m128d _mm_blend_pd (__m128d v1, __m128d v2, const int mask);
 */
+
 /*
 __m256d
 
 DPPD: __m128d _mm_dp_pd ( __m128d a, __m128d b, const int mask);
 
-/*
+
 
 for the dot product masking, an 8 bit (byte) mask is used,
 the lower nibble is where to place the result in the vector (which subset of the entries)
@@ -57,7 +58,7 @@ nibble in the
 */
 
 // this is ok for stand alone 2x2, can do better for 4x4 if carefule
-inline void  matMultAvx2x2(doubleAl * restrict res, doubleAl* restrict leftM ,doubleAl* restrict rightM){
+inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
     __m128d resRow1 = _mm_load_pd(res); // 1
     __m128d resRow2= _mm_load_pd(res + 2) ;  //2
     __m128d leftRow1 = _mm_load_pd(leftM); //3 
@@ -69,7 +70,7 @@ inline void  matMultAvx2x2(doubleAl * restrict res, doubleAl* restrict leftM ,do
     __m128d res12 = _mm_dp_pd(leftRow1,rightCol2,0x32);  // 8
     __m128d res21 = _mm_dp_pd(leftRow2, rightCol1, 0x31); // 9 
     __m128d res22 = _mm_dp_pd(leftRow2,rightCol2,0x32); // 10
-    resRow1 =  res11 + res12 ;
+    resRow1 =  res11 + res12 ; // for some reason i don't trust that this does the expected thing
     resRow2 = res21 + res22 ; 
     _mm_store_pd(res, resRow1);
     _mm_store_pd(res+2,resRow2);
@@ -79,23 +80,59 @@ inline void  matMultAvx2x2(doubleAl * restrict res, doubleAl* restrict leftM ,do
 
 
 
-inline void  SimpleMatMult2x2( doubleAl  *restrict res,
-     doubleAl *restrict leftM, doubleAl *restrict rightM){
-        res[0] = res[0] +( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
-        res[1] = res[1] +(leftM[0] * rightM[2] + leftM[1] * rightM[3]);
-        res[2] = res[2] +(leftM[2] * rightM[0]+ leftM[3] * rightM[1]);
-        res[3] = res[3] +(leftM[2] * rightM[2]+ leftM[3] * rightM[3]);
+// inline void  SimpleMatMult2x2( doubleAl  *restrict res,
+//      doubleAl *restrict leftM, doubleAl *restrict rightM){
+//         res[0] = res[0] +( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
+//         res[1] = res[1] +(leftM[0] * rightM[2] + leftM[1] * rightM[3]);
+//         res[2] = res[2] +(leftM[2] * rightM[0]+ leftM[3] * rightM[1]);
+//         res[3] = res[3] +(leftM[2] * rightM[2]+ leftM[3] * rightM[3]);
 
-    } 
+//     } 
 
- static inline void copyFromTo(doubleAl *from, doubleAl *to, int len){
-    int i= 0;
-    for( i =0 ; i < len; i ++){
-        to[i]= from[i];
+//  static inline void copyFromTo(doubleAl *from, doubleAl *to, int len){
+//     int i= 0;
+//     for( i =0 ; i < len; i ++){
+//         to[i]= from[i];
 
-    }
+//     }
 
-}
+// }
+
+//  only welldefined in the AVXMatMult4x4 codes, and thats ok
+// #define dotProd4x4RowBlock(ix) { \
+    // resRowLeft = _mm_load_pd(resF + (ix)) ; \
+    // resRowRight = _mm_load_pd(resF + 2 + (ix)); \
+
+
+// void AVXMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF
+//     // should macroize all the variations so its easier to 
+//                     // ,doubleAl *nextRes, doubleAl *nextLeft,doubleAl nextRight
+//                     ){
+//     __m128d rMatCol1Up = _mm_load_pd(rightMF);
+//     __m128d rMatCol1Down = _mm_load_pd(rightMF+2);
+//     __m128d rMatCol2Up= _mm_load_pd(rightMF+4);
+//     __m128d rMatCol2Down = _mm_load_pd(rightMF+ 6);
+//     __m128d rMatCol3Up = _mm_load_pd(rightMF+8 );
+//     __m128d rMatCol3Down = _mm_load_pd(rightMF+10)
+//     __m128d rMatCol4Up = _mm_load_pd(rightMF+12);
+//     __m128d rMatCol4Down = _mm_load_pd(rightMF+14); 
+
+//     __m128d resRowLeft ;
+//     __m128d resRowRight ;
+
+//     __m128d lMatRowLeft ;
+//     __m128d lMatRowRight ;
+//     // at this point i'm using 12 XMM registers, have 4 xmm left!
+
+
+//     // i do this macro 4 times!
+
+//     dotProd4x4RowBlock(0) ;
+//     dotProd4x4RowBlock(4) ;
+//     dotProd4x4RowBlock(8) ; 
+//     dotProd4x4RowBlock(12) ; 
+
+// }
 
 
 void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF

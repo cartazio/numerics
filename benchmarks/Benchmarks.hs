@@ -54,11 +54,6 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
-                                    ),
-                            bench "POC dumb loop  "  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    dumbLooper cv av bv  localsize
                                     )
                                      ]] )
        ,bgroup "In L2,  2^16 each "  
@@ -109,12 +104,8 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
-                                    ),
-                            bench "POC dumb loop  "  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    dumbLooper cv av bv  localsize
                                     )
+                            
                                ]] )
 
 {-
@@ -138,12 +129,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
-                                    ),
-                            bench "POC dumb loop  "  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    dumbLooper cv av bv  localsize
-                                    ),
+                                    ),  
                                     bench "POC Block NOOP"  $! whnfIO (
                                        do  
                                         (!cv,!av,!bv)<- return vTup 

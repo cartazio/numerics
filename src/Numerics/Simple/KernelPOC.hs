@@ -5,7 +5,7 @@ module Numerics.Simple.KernelPOC where
 
 import Prelude hiding ((>>))
 
-import Data.Primitive 
+--import Data.Primitive
 import Numerics.Simple.Bits
 import Control.Monad.Primitive (touch )
 
@@ -125,12 +125,7 @@ basicKernel  !aix !bix !cix !aMat !bMat !cMat =
                             quadDirectSimpleWithShiftC aix bix cix aMat bMat cMat
                    
 
-                            
-dumbLooper !rMat !aMat !bMat !n = go 1
-    where
-        ncube = n * n * n
-        go i | i <  ncube = do touch rMat ; go (i + 1)
-             |  otherwise = return () 
+
 
 
 {-# INLINE simpleLooper #-}

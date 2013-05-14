@@ -64,7 +64,7 @@ library
   -- Modules included in this library but not exported.
   -- other-modules:       
 
-    ghc-options: -O2  -optlo "-O3"  -optlc "-O3" -w   -optlo "-std-compile-opts" -optlo  "-regalloc=pbqp"  -fllvm-tbaa  -fllvm  -pgma "gcc -c -Xassembler"
+    ghc-options: -O2  -optlo "-O3"  -optlc "-O3" -w   -optlo "-std-compile-opts" -optlo  "-regalloc=pbqp"  -fllvm-tbaa  -fllvm  
      ---optc "-march=native" 
     -- -fllvm
 
@@ -97,8 +97,8 @@ library
 
     c-sources: cbits/prefetch.c
                 cbits/simplemat.c
-    cc-options:   -mavx
-    x-cc-name: clang
+    cc-options:   -msse4.2 -march=corei7
+    --x-cc-name: clang
 
 
   -- Directories containing source files.
@@ -122,8 +122,8 @@ benchmark benchmarks
     c-sources:  cbits/testAppleBLAS.c 
                 cbits/prefetch.c
                 cbits/simplemat.c
-    cc-options: -mavx
-    x-cc-name: clang
+    cc-options: -msse4.2 -march=corei7
+    --x-cc-name: clang
 
 
 
