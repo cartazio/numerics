@@ -135,13 +135,11 @@ inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
 // }
 
 
-void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF
+ void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM
     // should macroize all the variations so its easier to 
                     // ,doubleAl *nextRes, doubleAl *nextLeft,doubleAl nextRight
                     ){
-    double res[16];
-    double leftM[16];
-    double rightM[16];
+
 
 // intialize these things
 
