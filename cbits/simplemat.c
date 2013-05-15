@@ -80,64 +80,54 @@ inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
 
 
 
-// inline void  SimpleMatMult2x2( doubleAl  *restrict res,
-//      doubleAl *restrict leftM, doubleAl *restrict rightM){
-//         res[0] = res[0] +( leftM[0] * rightM [0] + leftM[1] * rightM[1]   );
-//         res[1] = res[1] +(leftM[0] * rightM[2] + leftM[1] * rightM[3]);
-//         res[2] = res[2] +(leftM[2] * rightM[0]+ leftM[3] * rightM[1]);
-//         res[3] = res[3] +(leftM[2] * rightM[2]+ leftM[3] * rightM[3]);
 
-//     } 
+/* only welldefined in the AVXMatMult4x4 codes, and thats ok
+i think theres JUST enough xmm registers for this to squeek by
+*/
+#define dotProd4x4RowBlock(ix) { \
+    resRowLeft = _mm_load_pd(resF + (ix)) ; \
+    resRowRight = _mm_load_pd(resF + 2 + (ix)); \
+    lMatRowLeft = _mm_load_pd(leftMF + (ix) ) ; \
+    lMatRowRight= _mm_load_pd(leftMF + (ix) + 2) ; \
+    resRowLeft += _mm_dp_pd(lMatRowLeft, rMatCol1Up, 0x31) + _mm_dp_pd(lMatRowRight, rMatCol1Down, 0x31); \
+    resRowLeft += _mm_dp_pd(lMatRowLeft, rMatCol2Up, 0x32) + _mm_dp_pd(lMatRowRight, rMatCol1Down, 0x32); \
+    resRowRight += _mm_dp_pd(lMatRowLeft, rMatCol3Up, 0x31) + _mm_dp_pd(lMatRowRight, rMatCol3Down, 0x31); \
+    resRowRight += _mm_dp_pd(lMatRowLeft, rMatCol4Up, 0x32) + _mm_dp_pd(lMatRowRight, rMatCol4Down, 0x32); \
+    _mm_store_pd(resF + (ix), resRowLeft); \
+    _mm_store_pd(resF + 2 + (ix),resRowRight); \
+}
 
-//  static inline void copyFromTo(doubleAl *from, doubleAl *to, int len){
-//     int i= 0;
-//     for( i =0 ; i < len; i ++){
-//         to[i]= from[i];
+// void AVXMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF){
+void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM ){
+    __m128d rMatCol1Up = _mm_load_pd(rightMF);
+    __m128d rMatCol1Down = _mm_load_pd(rightMF+2);
+    __m128d rMatCol2Up= _mm_load_pd(rightMF+4);
+    __m128d rMatCol2Down = _mm_load_pd(rightMF+ 6);
+    __m128d rMatCol3Up = _mm_load_pd(rightMF+8 );
+    __m128d rMatCol3Down = _mm_load_pd(rightMF+10);
+    __m128d rMatCol4Up = _mm_load_pd(rightMF+12);
+    __m128d rMatCol4Down = _mm_load_pd(rightMF+14); 
 
-//     }
+    __m128d resRowLeft ;
+    __m128d resRowRight ;
 
-// }
-
-//  only welldefined in the AVXMatMult4x4 codes, and thats ok
-// #define dotProd4x4RowBlock(ix) { \
-    // resRowLeft = _mm_load_pd(resF + (ix)) ; \
-    // resRowRight = _mm_load_pd(resF + 2 + (ix)); \
-
-
-// void AVXMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF
-//     // should macroize all the variations so its easier to 
-//                     // ,doubleAl *nextRes, doubleAl *nextLeft,doubleAl nextRight
-//                     ){
-//     __m128d rMatCol1Up = _mm_load_pd(rightMF);
-//     __m128d rMatCol1Down = _mm_load_pd(rightMF+2);
-//     __m128d rMatCol2Up= _mm_load_pd(rightMF+4);
-//     __m128d rMatCol2Down = _mm_load_pd(rightMF+ 6);
-//     __m128d rMatCol3Up = _mm_load_pd(rightMF+8 );
-//     __m128d rMatCol3Down = _mm_load_pd(rightMF+10)
-//     __m128d rMatCol4Up = _mm_load_pd(rightMF+12);
-//     __m128d rMatCol4Down = _mm_load_pd(rightMF+14); 
-
-//     __m128d resRowLeft ;
-//     __m128d resRowRight ;
-
-//     __m128d lMatRowLeft ;
-//     __m128d lMatRowRight ;
-//     // at this point i'm using 12 XMM registers, have 4 xmm left!
+    __m128d lMatRowLeft ;
+    __m128d lMatRowRight ;
+    // at this point i'm using 12 XMM registers, have 4 xmm left!
+    // which gives me a "budget" of up to 4 intermediaries at time!
 
 
-//     // i do this macro 4 times!
+    // i do this macro 4 times!
 
-//     dotProd4x4RowBlock(0) ;
-//     dotProd4x4RowBlock(4) ;
-//     dotProd4x4RowBlock(8) ; 
-//     dotProd4x4RowBlock(12) ; 
+    dotProd4x4RowBlock(0) ;
+    dotProd4x4RowBlock(4) ;
+    dotProd4x4RowBlock(8) ; 
+    dotProd4x4RowBlock(12) ; 
 
-// }
+}
 
 
- void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM
-    // should macroize all the variations so its easier to 
-                    // ,doubleAl *nextRes, doubleAl *nextLeft,doubleAl nextRight
+ /*void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM
                     ){
 
 
@@ -178,27 +168,7 @@ inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
 
 
 
-    // speculative next bunch prefetch hinting, using level 2 rather than 3, not sure if theres a diff
-    // but gives it lower relative priority
-
-//  i now can compute the next location stuff, use it in a new version
-    // __builtin_prefetch(res + 16, 1, 0);
-    // __builtin_prefetch(leftM+16,0, 0);
-    // __builtin_prefetch(rightM+16,0, 0);
-
-    // __builtin_prefetch(res + 16 + 4, 1, 3);
-    // __builtin_prefetch(res + 16 + 8, 1,3);
-    // __builtin_prefetch(res+ 16 + 12, 1, 3);
-
-    // __builtin_prefetch(leftM + 16 + 4, 0, 3);
-    // __builtin_prefetch(leftM + 16 + 8, 0,3);
-    // __builtin_prefetch(leftM + 16 + 12, 0, 3);
-
-    // __builtin_prefetch(rightM + 16 + 4, 0, 3);
-    // __builtin_prefetch(rightM + 16 + 8, 0,3);
-    // __builtin_prefetch(rightM+ 16 + 12, 0, 3);
-
-}
+}*/
 
 
 void SimpleRowRowColMatrixMultViaDots(doubleAl  *restrict  res,doubleAl   *restrict  leftM,  doubleAl   *restrict rightM , int nSize   ){
