@@ -77,16 +77,17 @@ y+=1 every time 0 = step mode 4
 
 
 -}
+wrapFun :: (Ptr CDouble -> Ptr CDouble -> Ptr CDouble-> CInt -> IO ()) ->SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> Int -> IO ()
+wrapFun fun am bm cm size=
+   SM.unsafeWith am $! \a -> 
+        SM.unsafeWith bm $! \b ->
+            SM.unsafeWith cm  $! \c -> fun  (castPtr a )(castPtr b )(castPtr c)  (fromIntegral size )
 
 foreign import ccall unsafe "simplemat.c fatDotProduct" 
     c_fatDotProduct :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble-> CInt -> IO ()
 
 fatDotProduct ::  SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> Int -> IO ()
-fatDotProduct am bm cm size = 
-   SM.unsafeWith am $! \a -> 
-        SM.unsafeWith bm $! \b ->
-            SM.unsafeWith cm  $! \c -> c_fatDotProduct (castPtr a) (castPtr b) (castPtr c) (fromIntegral size )
-
+fatDotProduct am bm cm size = wrapFun c_fatDotProduct am bm cm size
 
 
 foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 

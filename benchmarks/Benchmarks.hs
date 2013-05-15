@@ -44,12 +44,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                do  
                                     (!cv,!av,!bv)<- return vTup 
                                     dgemmBlockWrapped cv av bv 
-                                    ),
-                            bench "POC Block NOOP"  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    dgemmBlockNOOP cv av bv 
-                                    ),
+                                    ), 
+                                    bench "POC Block Fat C Dot"  $! whnfIO (
+                                       do  
+                                        (!cv,!av,!bv)<- return vTup 
+                                        fatDotProduct cv av bv localsize
+                                        ) ,
                             bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
@@ -69,12 +69,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                        do  
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
-                                            ),
-                                    bench "POC Block NOOP"  $! whnfIO (
+                                            ), 
+                                    bench "POC Block Fat C Dot"  $! whnfIO (
                                        do  
                                         (!cv,!av,!bv)<- return vTup 
-                                        dgemmBlockNOOP cv av bv 
-                                        ),
+                                        fatDotProduct cv av bv localsize
+                                        ) ,
                             bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
@@ -94,12 +94,12 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                    do  
                                         (!cv,!av,!bv)<- return vTup 
                                         dgemmBlockWrapped cv av bv 
-                                        ),
-                                    bench "POC Block NOOP"  $! whnfIO (
+                                        ), 
+                                    bench "POC Block Fat C Dot"  $! whnfIO (
                                        do  
                                         (!cv,!av,!bv)<- return vTup 
-                                        dgemmBlockNOOP cv av bv 
-                                        ),
+                                        fatDotProduct cv av bv localsize
+                                        ) ,
                             bench "POC Loop block  "  $! whnfIO (
                                do  
                                     (!cv,!av,!bv)<- return vTup 
@@ -130,10 +130,10 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                     (!cv,!av,!bv)<- return vTup 
                                     simpleLooper cv av bv  localsize
                                     ),  
-                                    bench "POC Block NOOP"  $! whnfIO (
+                                    bench "POC Block Fat C Dot"  $! whnfIO (
                                        do  
                                         (!cv,!av,!bv)<- return vTup 
-                                        dgemmBlockNOOP cv av bv 
+                                        fatDotProduct cv av bv localsize
                                         ) 
                             
                                    ]] )               
