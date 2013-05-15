@@ -114,7 +114,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
             ,bgroup "beyond  L3 2^20 elms *8 bytes each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
-                        powIx = 10
+                        powIx = 14  
                         in 
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
@@ -125,16 +125,17 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
                                             (!cv,!av,!bv)<- return vTup 
                                             dgemmBlockWrapped cv av bv 
                                             ),
-                            bench "POC Loop block  "  $! whnfIO (
-                               do  
-                                    (!cv,!av,!bv)<- return vTup 
-                                    simpleLooper cv av bv  localsize
-                                    ),  
                                     bench "POC Block Fat C Dot"  $! whnfIO (
                                        do  
                                         (!cv,!av,!bv)<- return vTup 
                                         fatDotProduct cv av bv localsize
-                                        ) 
+                                        ) ,
+
+                            bench "POC Loop block  "  $! whnfIO (
+                               do  
+                                    (!cv,!av,!bv)<- return vTup 
+                                    simpleLooper cv av bv  localsize
+                                    )
                             
                                    ]] )               
 

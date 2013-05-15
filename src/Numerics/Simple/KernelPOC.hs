@@ -81,7 +81,9 @@ wrapFun :: (Ptr CDouble -> Ptr CDouble -> Ptr CDouble-> CInt -> IO ()) ->SM.IOVe
 wrapFun fun am bm cm size=
    SM.unsafeWith am $! \a -> 
         SM.unsafeWith bm $! \b ->
-            SM.unsafeWith cm  $! \c -> fun  (castPtr a )(castPtr b )(castPtr c)  (fromIntegral size )
+            SM.unsafeWith cm  $! \c ->
+                     do  fun  (castPtr a )(castPtr b )(castPtr c)  (fromIntegral size )
+                         return ()
 
 foreign import ccall unsafe "simplemat.c fatDotProduct" 
     c_fatDotProduct :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble-> CInt -> IO ()
