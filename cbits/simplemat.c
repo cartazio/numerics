@@ -109,10 +109,22 @@ i think theres JUST enough xmm registers for this to squeek by
     __m128d   resRowRight##ix = _mm_load_pd(resF + 2 + (ix)); \
     __m128d  lMatRowLeft##ix = _mm_load_pd(leftMF + (ix) ) ; \
     __m128d   lMatRowRight##ix= _mm_load_pd(leftMF + (ix) + 2) ; \
-    resRowLeft##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol1Up, 0x31) + _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x31); \
-    resRowLeft##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol2Up, 0x32) + _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x32); \
-    resRowRight##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol3Up, 0x31) + _mm_dp_pd(lMatRowRight##ix, rMatCol3Down, 0x31); \
-    resRowRight##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol4Up, 0x32) + _mm_dp_pd(lMatRowRight##ix, rMatCol4Down, 0x32); \
+    __m128d resRowLeftResultA##ix =  _mm_dp_pd(lMatRowLeft##ix , rMatCol1Up, 0x31) ; \
+    __m128d resRowLeftResultB##ix =_mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x31) ; \
+    resRowLeft##ix = resRowLeftResultA##ix ; \
+    resRowLeft##ix = resRowLeftResultB##ix ; \
+    resRowLeftResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol2Up, 0x32) ; \
+    resRowLeftResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x32) ; \
+    resRowLeft##ix +=  resRowLeftResultA##ix  ; \
+    resRowLeft##ix +=  resRowLeftResultB##ix  ; \
+    __m128d  resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol3Up, 0x31) ; \ 
+    __m128d  resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol3Down, 0x31); \
+    resRowRight##ix +=  resRowRightResultA##ix ; \ 
+    resRowRight##ix +=  resRowRightResultB##ix ; \
+    resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol4Up, 0x32) ; \ 
+    resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol4Down, 0x32); \
+    resRowRight##ix +=   resRowRightResultA##ix ; \
+    resRowRight##ix +=   resRowRightResultB##ix ; \
     _mm_store_pd(resF + (ix), resRowLeft##ix); \
     _mm_store_pd(resF + 2 + (ix),resRowRight##ix); \
 }

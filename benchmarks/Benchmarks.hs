@@ -18,6 +18,20 @@ import Numerics.Simple.KernelPOC
 whnfIter:: Int ->(a->a)-> a -> Pure 
 whnfIter cnt f  arg = whnf (\v -> foldl' (\ a b -> f a ) v [0 .. cnt]  ) arg
 
+type MatFun = IOVectDouble -> IOVectDouble -> IOVectDouble-> Int  -> IO ()
+
+benchMatMultSet :: Int ->  [(String,MatFun)]->Benchmark
+benchMatMultSet logDimSize lsFuns =
+    where
+        
+        vTup=pureMkCAB powIx  
+        localsize = 2^powIx
+        powIx = logDimSize
+
+
+
+
+
 main =  defaultMainWith defaultConfig{cfgSamples=ljust 3} (return ()) [
     bgroup "Morton Z" [
     {-bgroup "morton" $!-} bcompare [ bench "outerShuffle64B 1000" $! whnfIter 1000 outerShuffle64B 7, bench "outerShuffle64A 1000" $! whnfIter 1000 outerShuffle64A 7  , bench "addingNumbersIter1000" $! whnfIter 1000 ( (7 + ):: Word->Word)  9 ,
@@ -111,10 +125,10 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 3} (return ()) [
 {-
 2^(23) * 3 bytes
 -}               
-            ,bgroup "beyond  L3 2^24 * 3 elms *8 bytes each "  
+            ,bgroup "beyond  L3 2^22 * 3 elms *8 bytes each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
-                        powIx = 12  
+                        powIx = 11  
                         in 
                              [bcompare [ bench "AppleBlas "  $! whnfIO (
                                 do  (!cv,!av,!bv)<- return vTup 
