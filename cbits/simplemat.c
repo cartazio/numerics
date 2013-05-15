@@ -79,6 +79,12 @@ inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
 
 
 
+void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doubleAl * restrict rightMat, int sizeN){
+    // we assume we're given sizeN x sizeN matrices
+
+
+}
+
 
 
 /* only welldefined in the AVXMatMult4x4 codes, and thats ok
@@ -95,10 +101,14 @@ i think theres JUST enough xmm registers for this to squeek by
     resRowRight += _mm_dp_pd(lMatRowLeft, rMatCol4Up, 0x32) + _mm_dp_pd(lMatRowRight, rMatCol4Down, 0x32); \
     _mm_store_pd(resF + (ix), resRowLeft); \
     _mm_store_pd(resF + 2 + (ix),resRowRight); \
+    resRowRight =  _mm_xor_pd(resRowRight,resRowRight); \
+    resRowLeft = _mm_xor_pd(resRowLeft,resRowLeft) ; \ 
+    lMatRowRight = _mm_xor_pd(lMatRowRight,lMatRowRight) ; \ 
+    lMatRowLeft = _mm_xor_pd(lMatRowLeft,lMatRowLeft) ; \ 
 }
 
 // void AVXMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF){
-void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF ){
+inline void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF ){
     __m128d rMatCol1Up = _mm_load_pd(rightMF);
     __m128d rMatCol1Down = _mm_load_pd(rightMF+2);
     __m128d rMatCol2Up= _mm_load_pd(rightMF+4);
