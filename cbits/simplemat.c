@@ -90,8 +90,8 @@ void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doub
         {
             for (nIx= 0; nIx< scaledSized; ++nIx)
             {
-                SimpleMatMult4x4(result + ((yIx * scaledSized + xIx)* 16), 
-                    leftMat + ((yIx * scaledSized + nIx)* 16), rightMat + ((xIx * scaledSized + nIx ) * 16) ) ;
+                SimpleMatMult4x4(result + (((yIx * scaledSized )+ xIx)* 16), 
+                    leftMat + (((yIx * scaledSized) + nIx)* 16), rightMat + (((xIx * scaledSized )+ nIx ) * 16) ) ;
             }
         }
     }
