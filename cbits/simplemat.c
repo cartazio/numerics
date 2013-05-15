@@ -79,11 +79,11 @@ inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
 
 
 
-void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doubleAl * restrict rightMat, int sizeN){
-    // we assume we're given sizeN x sizeN matrices
+// void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doubleAl * restrict rightMat, int sizeN){
+//     // we assume we're given sizeN x sizeN matrices
 
 
-}
+// }
 
 
 
@@ -91,21 +91,22 @@ void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doub
 i think theres JUST enough xmm registers for this to squeek by
 */
 #define dotProd4x4RowBlock(ix) { \
-    resRowLeft = _mm_load_pd(resF + (ix)) ; \
-    resRowRight = _mm_load_pd(resF + 2 + (ix)); \
-    lMatRowLeft = _mm_load_pd(leftMF + (ix) ) ; \
-    lMatRowRight= _mm_load_pd(leftMF + (ix) + 2) ; \
-    resRowLeft += _mm_dp_pd(lMatRowLeft, rMatCol1Up, 0x31) + _mm_dp_pd(lMatRowRight, rMatCol1Down, 0x31); \
-    resRowLeft += _mm_dp_pd(lMatRowLeft, rMatCol2Up, 0x32) + _mm_dp_pd(lMatRowRight, rMatCol1Down, 0x32); \
-    resRowRight += _mm_dp_pd(lMatRowLeft, rMatCol3Up, 0x31) + _mm_dp_pd(lMatRowRight, rMatCol3Down, 0x31); \
-    resRowRight += _mm_dp_pd(lMatRowLeft, rMatCol4Up, 0x32) + _mm_dp_pd(lMatRowRight, rMatCol4Down, 0x32); \
-    _mm_store_pd(resF + (ix), resRowLeft); \
-    _mm_store_pd(resF + 2 + (ix),resRowRight); \
-    resRowRight =  _mm_xor_pd(resRowRight,resRowRight); \
-    resRowLeft = _mm_xor_pd(resRowLeft,resRowLeft) ; \ 
-    lMatRowRight = _mm_xor_pd(lMatRowRight,lMatRowRight) ; \ 
-    lMatRowLeft = _mm_xor_pd(lMatRowLeft,lMatRowLeft) ; \ 
+    __m128d   resRowLeft##ix = _mm_load_pd(resF + (ix)) ; \
+    __m128d   resRowRight##ix = _mm_load_pd(resF + 2 + (ix)); \
+    __m128d  lMatRowLeft##ix = _mm_load_pd(leftMF + (ix) ) ; \
+    __m128d   lMatRowRight##ix= _mm_load_pd(leftMF + (ix) + 2) ; \
+    resRowLeft##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol1Up, 0x31) + _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x31); \
+    resRowLeft##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol2Up, 0x32) + _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x32); \
+    resRowRight##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol3Up, 0x31) + _mm_dp_pd(lMatRowRight##ix, rMatCol3Down, 0x31); \
+    resRowRight##ix += _mm_dp_pd(lMatRowLeft##ix , rMatCol4Up, 0x32) + _mm_dp_pd(lMatRowRight##ix, rMatCol4Down, 0x32); \
+    _mm_store_pd(resF + (ix), resRowLeft##ix); \
+    _mm_store_pd(resF + 2 + (ix),resRowRight##ix); \
 }
+
+    // resRowRight =  _mm_xor_pd(resRowRight,resRowRight); \
+    // resRowLeft = _mm_xor_pd(resRowLeft,resRowLeft) ; \ 
+    // lMatRowRight = _mm_xor_pd(lMatRowRight,lMatRowRight) ; \ 
+    // lMatRowLeft = _mm_xor_pd(lMatRowLeft,lMatRowLeft) ; \ 
 
 // void AVXMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF){
 inline void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF ){
@@ -118,11 +119,11 @@ inline void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftM
     __m128d rMatCol4Up = _mm_load_pd(rightMF+12);
     __m128d rMatCol4Down = _mm_load_pd(rightMF+14); 
 
-    __m128d resRowLeft ;
-    __m128d resRowRight ;
+    // __m128d resRowLeft ;
+    // __m128d resRowRight ;
 
-    __m128d lMatRowLeft ;
-    __m128d lMatRowRight ;
+    // __m128d lMatRowLeft ;
+    // __m128d lMatRowRight ;
     // at this point i'm using 12 XMM registers, have 4 xmm left!
     // which gives me a "budget" of up to 4 intermediaries at time!
 
