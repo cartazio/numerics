@@ -98,7 +98,7 @@ i think theres JUST enough xmm registers for this to squeek by
 }
 
 // void AVXMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF){
-void SimpleMatMult4x4( doubleAl * restrict res,doubleAl * restrict leftM,  doubleAl *restrict rightM ){
+void SimpleMatMult4x4( doubleAl * restrict resF,doubleAl * restrict leftMF,  doubleAl *restrict rightMF ){
     __m128d rMatCol1Up = _mm_load_pd(rightMF);
     __m128d rMatCol1Down = _mm_load_pd(rightMF+2);
     __m128d rMatCol2Up= _mm_load_pd(rightMF+4);
