@@ -98,7 +98,7 @@ library
     c-sources: cbits/prefetch.c
                 cbits/simplemat.c
     cc-options:   -msse4.2 -march=corei7 -O3
-    --x-cc-name: clang
+    x-cc-name: clang
 
 
   -- Directories containing source files.
@@ -123,7 +123,7 @@ benchmark benchmarks
                 cbits/prefetch.c
                 cbits/simplemat.c
     cc-options: -msse4.2 -march=corei7 -O3
-    --x-cc-name: clang
+    x-cc-name: clang
 
 
 

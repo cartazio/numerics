@@ -7,15 +7,15 @@ import Prelude hiding ((>>))
 
 --import Data.Primitive
 import Numerics.Simple.Bits
-import Control.Monad.Primitive (touch )
+import Control.Monad.Primitive ()
 
 import Foreign.Ptr
-import Foreign
+import Foreign()
 import Foreign.C.Types
 
 import qualified Data.Vector.Storable.Mutable as SM 
 
-import qualified  Data.Vector.Generic.Mutable as GM 
+
 import qualified  Data.Vector.Unboxed.Mutable as UM 
 
 
@@ -77,6 +77,16 @@ y+=1 every time 0 = step mode 4
 
 
 -}
+
+foreign import ccall unsafe "simplemat.c fatDotProduct" 
+    c_fatDotProduct :: Ptr CDouble -> Ptr CDouble -> Ptr CDouble-> CInt -> IO ()
+
+fatDotProduct ::  SM.IOVector Double -> SM.IOVector Double -> SM.IOVector Double -> Int -> IO ()
+fatDotProduct am bm cm size = 
+   SM.unsafeWith am $! \a -> 
+        SM.unsafeWith bm $! \b ->
+            SM.unsafeWith cm  $! \c -> c_fatDotProduct (castPtr a) (castPtr b) (castPtr c) (fromIntegral size )
+
 
 
 foreign import ccall unsafe "simplemat.c SimpleMatMult4x4" 

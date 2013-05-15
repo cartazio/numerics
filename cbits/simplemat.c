@@ -9,7 +9,6 @@
 
 
 
-
 /*
 
 -- aligned packed load VMOVAPD
@@ -30,6 +29,7 @@ __m128d _mm_load_pd (double const * p);
 #define restrict __restrict
 typedef  __attribute__((__aligned__(16)))  double doubleAl; 
 
+ void SimpleMatMult4x4( doubleAl * restrict ,doubleAl * restrict ,  doubleAl *restrict  );
 /*
 
 
@@ -79,11 +79,25 @@ inline void  matMultAvx2x2(double*  res, double*  leftM ,double* rightM){
 
 
 
-// void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doubleAl * restrict rightMat, int sizeN){
-//     // we assume we're given sizeN x sizeN matrices
+void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doubleAl * restrict rightMat, int sizeN){
+    // we assume we're given sizeN x sizeN matrices
+    int scaledSized = sizeN  / 16 ;  // needs at least 8x8  for sizedN
+    int yIx = 0 ;
+    int xIx = 0;
+    int nIx = 0 ; 
+    for(yIx=0 ; yIx < scaledSized ; yIx ++  ){
+        for (xIx=0 ; xIx < scaledSized; ++xIx)
+        {
+            for (nIx= 0; nIx< scaledSized; ++nIx)
+            {
+                SimpleMatMult4x4(result + ((yIx * scaledSized + xIx)* 16), 
+                    leftMat + ((yIx * scaledSized + nIx)* 16), rightMat + ((xIx * scaledSized + nIx ) * 16) ) ;
+            }
+        }
+    }
 
 
-// }
+}
 
 
 
