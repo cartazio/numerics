@@ -111,7 +111,7 @@ main =  defaultMainWith defaultConfig{cfgSamples=ljust 20} (return ()) [
 {-
 2^(23) * 3 bytes
 -}               
-            ,bgroup "beyond  L3 2^20 elms *8 bytes each "  
+            ,bgroup "beyond  L3 2^28 * 3 elms *8 bytes each "  
                ( let    vTup=pureMkCAB powIx  
                         localsize = 2^powIx
                         powIx = 14  
