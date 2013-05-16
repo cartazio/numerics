@@ -6,7 +6,7 @@
  // #include <smmintrin.h>
 // #endif
 
-
+#include <memory.h>
 
 
 /*
@@ -99,34 +99,53 @@ void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doub
 
 }
 
+/* col col  row
+want to see if it gets packed vectorized
+*/
+void toyMMult2x2(doubleAl * restrict resultG, doubleAl * restrict leftMatG, doubleAl * restrict rightMatG){
+    double result[4] ;
+    double leftMat[4] ;
+    double rightMat[4];
+    memcpy(result,resultG, 4*8);
+    memcpy(leftMat,leftMatG, 4*8);
+    memcpy(rightMat,rightMatG,4*8);
+    // memcpy(target, source, number of bytes)
+
+    result[0] += leftMat[0]* rightMat[0]+ leftMat[1]*rightMat[1];
+    result[1] += leftMat[0] * rightMat[2] + leftMat[1]* rightMat[3];
+    result[2] += leftMat[2] * rightMat[0] + leftMat[3] * rightMat[1];
+    result[3] += leftMat[2] * rightMat[2] + leftMat[3] * rightMat[3];
+    memcpy(resultG, result,4*8);
+
+}
 
 
 /* only welldefined in the AVXMatMult4x4 codes, and thats ok
 i think theres JUST enough xmm registers for this to squeek by
 */
 #define dotProd4x4RowBlock(ix) { \
-    __m128d   resRowLeft##ix = _mm_load_pd(resF + (ix)) ;\
-    __m128d   resRowRight##ix = _mm_load_pd(resF + 2 + (ix));\
+    __m128d   resRowLeft##ix = _mm_load_pd(resF + (ix)) ; \
+    __m128d   resRowRight##ix = _mm_load_pd(resF + 2 + (ix)); \ 
     __m128d  lMatRowLeft##ix = _mm_load_pd(leftMF + (ix) ) ;\
     __m128d   lMatRowRight##ix= _mm_load_pd(leftMF + (ix) + 2) ;\
-    __m128d resRowLeftResultA##ix =  _mm_dp_pd(lMatRowLeft##ix , rMatCol1Up, 0x31) ;\
-    __m128d resRowLeftResultB##ix =_mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x31) ;\
-    resRowLeft##ix = resRowLeftResultA##ix ;\
-    resRowLeft##ix = resRowLeftResultB##ix ;\
-    resRowLeftResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol2Up, 0x32) ;\
-    resRowLeftResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x32) ;\
-    resRowLeft##ix +=  resRowLeftResultA##ix  ;\
-    resRowLeft##ix +=  resRowLeftResultB##ix  ;\
-    __m128d  resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol3Up, 0x31) ;  
-    __m128d  resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol3Down, 0x31);\
-    resRowRight##ix +=  resRowRightResultA##ix ;  
-    resRowRight##ix +=  resRowRightResultB##ix ;\
-    resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol4Up, 0x32) ;  
-    resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol4Down, 0x32);\
-    resRowRight##ix +=   resRowRightResultA##ix ;\
-    resRowRight##ix +=   resRowRightResultB##ix ;\
-    _mm_store_pd(resF + (ix), resRowLeft##ix);\
-    _mm_store_pd(resF + 2 + (ix),resRowRight##ix);\
+    __m128d resRowLeftResultA##ix =  _mm_dp_pd(lMatRowLeft##ix , rMatCol1Up, 0x31) ; \
+    __m128d resRowLeftResultB##ix =_mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x31) ; \
+    resRowLeft##ix = resRowLeftResultA##ix ; \
+    resRowLeft##ix = resRowLeftResultB##ix ; \
+    resRowLeftResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol2Up, 0x32) ; \
+    resRowLeftResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x32) ; \
+    resRowLeft##ix +=  resRowLeftResultA##ix  ; \
+    resRowLeft##ix +=  resRowLeftResultB##ix  ; \
+    __m128d  resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol3Up, 0x31) ; \
+    __m128d  resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol3Down, 0x31); \
+    resRowRight##ix +=  resRowRightResultA##ix ; \ 
+    resRowRight##ix +=  resRowRightResultB##ix ; \
+    resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol4Up, 0x32) ;  \
+    resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol4Down, 0x32); \
+    resRowRight##ix +=   resRowRightResultA##ix ; \
+    resRowRight##ix +=   resRowRightResultB##ix ; \
+    _mm_store_pd(resF + (ix), resRowLeft##ix); \
+    _mm_store_pd(resF + 2 + (ix),resRowRight##ix); \
 }
 
     // resRowRight =  _mm_xor_pd(resRowRight,resRowRight); \
