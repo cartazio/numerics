@@ -101,6 +101,8 @@ void fatDotProduct(doubleAl * restrict result, doubleAl * restrict leftMat, doub
 
 /* col col  row
 want to see if it gets packed vectorized
+
+NOPE DOESN"T
 */
 void toyMMult2x2(doubleAl * restrict resultG, doubleAl * restrict leftMatG, doubleAl * restrict rightMatG){
     double result[4] ;
@@ -125,9 +127,9 @@ i think theres JUST enough xmm registers for this to squeek by
 */
 #define dotProd4x4RowBlock(ix) { \
     __m128d   resRowLeft##ix = _mm_load_pd(resF + (ix)) ; \
-    __m128d   resRowRight##ix = _mm_load_pd(resF + 2 + (ix)); \ 
-    __m128d  lMatRowLeft##ix = _mm_load_pd(leftMF + (ix) ) ;\
-    __m128d   lMatRowRight##ix= _mm_load_pd(leftMF + (ix) + 2) ;\
+    __m128d   resRowRight##ix = _mm_load_pd(resF + 2 + (ix)); \
+    __m128d  lMatRowLeft##ix = _mm_load_pd(leftMF + (ix) ) ; \
+    __m128d   lMatRowRight##ix= _mm_load_pd(leftMF + (ix) + 2) ; \
     __m128d resRowLeftResultA##ix =  _mm_dp_pd(lMatRowLeft##ix , rMatCol1Up, 0x31) ; \
     __m128d resRowLeftResultB##ix =_mm_dp_pd(lMatRowRight##ix, rMatCol1Down, 0x31) ; \
     resRowLeft##ix = resRowLeftResultA##ix ; \
@@ -138,7 +140,7 @@ i think theres JUST enough xmm registers for this to squeek by
     resRowLeft##ix +=  resRowLeftResultB##ix  ; \
     __m128d  resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol3Up, 0x31) ; \
     __m128d  resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol3Down, 0x31); \
-    resRowRight##ix +=  resRowRightResultA##ix ; \ 
+    resRowRight##ix +=  resRowRightResultA##ix ; \
     resRowRight##ix +=  resRowRightResultB##ix ; \
     resRowRightResultA##ix = _mm_dp_pd(lMatRowLeft##ix , rMatCol4Up, 0x32) ;  \
     resRowRightResultB##ix =  _mm_dp_pd(lMatRowRight##ix, rMatCol4Down, 0x32); \
