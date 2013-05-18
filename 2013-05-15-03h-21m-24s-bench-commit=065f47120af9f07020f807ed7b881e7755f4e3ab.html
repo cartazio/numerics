@@ -1481,17 +1481,18 @@ for (var pix in  prefixes){
     console.log(p, pix);
   var prev = null;
   var benches = data[p].benches;
-  var means = data[p].means ;
-  means = $.scaleTimes(means);
-  
-  var ylabels = data[p].ylabels;
-  var _ylabels = [];
-   
-  $("#overview").before('<style>.tickLabel {width: px;}</style>')
+  var means = $.scaleTimes(data[p].means) ;
+  // means = $.scaleTimes(means);
+   ylabels = data[p].ylabels;
+   _ylabels = [];
 
- for (var i = 0; i < means[0].length; i++) {
-    xs.push({ label: benches[i].split('/')[1], data: [[means[0][i], -i]]});
-    _ylabels.push([-i,ylabels[i][1]]);
+  $("#overview").before('<style>.tickLabel {width: 320px;}</style>')
+
+  for (var i = 0; i < means[0].length; i++) {
+    var label = benches[i].split('/')[1];
+    xs.push({ label: label, data: [[means[0][i], -i]]});
+    var alabel = ylabels[i][1].replace(p+'/','');
+    _ylabels.push([-i, alabel] );
   }
 
   $("#overview").before('<h2>'+p+'</h2><div id="overview_' + pix + '" class="ovchart" style="width:900px;height:200px;"></div>');         
@@ -1502,7 +1503,7 @@ for (var pix in  prefixes){
       grid: { borderColor: "#777", hoverable: true },
       legend: { show: false/*xs.length > 1*/ },
       xaxis: { max: Math.max.apply(undefined,means[0]) * 1.02 },
-      yaxis: { ticks: _ylabels, tickColor: '#ffffff' }  
+      yaxis: { ticks: _ylabels, tickColor: '#ffffff' }
   });
   console.log(ylabels);
   if (benches.length > 3){o.getPlaceholder().height(28*benches.length);}
