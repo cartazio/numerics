@@ -1461,7 +1461,7 @@ for (var prefix in _prefixes)
     prefixes.push(prefix);
  
 
- console.log(prefixes);
+ // console.log(prefixes);
 var data = {};
 for (var p in prefixes) {
     console.log(p);
@@ -1473,16 +1473,23 @@ for (var p in prefixes) {
             data[prefix].ylabels.push(ylabels[i]);
             data[prefix].means.push(meansUnscaled[i]);
         }
+
+    // data[prefix].means = $.scaleTimes(data[prefix].means)   ;
     }
 }
 for (var pix in  prefixes){
+
+
   var xs = [];
   var p = prefixes[pix]
     console.log(p, pix);
   var prev = null;
   var benches = data[p].benches;
   var means = $.scaleTimes(data[p].means) ;
-  // means = $.scaleTimes(means);
+  // console.log(means);
+  var meansLabel = means[1]; 
+  // console.log("label is " + meansLabel);
+
    ylabels = data[p].ylabels;
    _ylabels = [];
 
@@ -1505,12 +1512,14 @@ for (var pix in  prefixes){
       xaxis: { max: Math.max.apply(undefined,means[0]) * 1.02 },
       yaxis: { ticks: _ylabels, tickColor: '#ffffff' }
   });
-  console.log(ylabels);
+  // console.log(ylabels);
   if (benches.length > 3){o.getPlaceholder().height(28*benches.length);}
   o.resize();
   o.setupGrid();
   o.draw();
-  $.addTooltip("#overview_"+pix, function(x,y) { return x + ' ' + means[1]; });
+  // that function scope trick
+
+  (function(label) { $.addTooltip("#overview_"+pix, function(x,y) { return x + ' ' + label; });} )(meansLabel);
 };
 
 $("#overview").remove();

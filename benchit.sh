@@ -10,4 +10,4 @@ if git status | grep "Changes"; then
 
 fi
 
-./dist/build/benchmarks/benchmarks  -o "BenchmarkLog/${thedate}-bench-commit=${thecommit}.html"
+./dist/build/benchmarks/benchmarks  -o "BenchmarkLog/${thedate}-bench-commit=${thecommit}.html" --template=./template/report.tpl 

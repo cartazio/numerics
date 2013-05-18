@@ -27,6 +27,7 @@ benchMatMultSet logDimSize lsFuns =
         vTup=pureMkCAB powIx  
         localsize = 2^powIx
         powIx = logDimSize
+        dimStr =  show "3 * 2^" ++ (show (2* logDimSize))
 
 
 

@@ -170,34 +170,91 @@ $(function () {
 
   var benches = [{{#report}}"{{name}}",{{/report}}];
   var ylabels = [{{#report}}[-{{number}},'<a href="#b{{number}}">{{name}}</a>'],{{/report}}];
-  var means = $.scaleTimes([{{#report}}{{anMean.estPoint}},{{/report}}]);
+  var meansUnscaled = [{{#report}}{{anMean.estPoint}},{{/report}}];
   var xs = [];
-  var prev = null;
-  for (var i = 0; i < means[0].length; i++) {
-    var name = benches[i].split(/\//);
-    name.pop();
-    name = name.join('/');
-    if (name != prev) {
-      xs.push({ label: name, data: [[means[0][i], -i]]});
-      prev = name;
+
+  if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: function (searchString, position) {
+            position = position || 0;
+             return this.indexOf(searchString, position) === position;
+        }
+    });
+}
+
+// Find the prefixes first
+var _prefixes = {}, prefixes = [];
+for (var i in benches)
+    _prefixes[benches[i].split('/')[0]] = true;
+for (var prefix in _prefixes)
+    prefixes.push(prefix);
+ 
+
+ // console.log(prefixes);
+var data = {};
+for (var p in prefixes) {
+    console.log(p);
+    var prefix = prefixes[p];
+    data[prefix] = {benches:[], ylabels:[], means:[]};
+    for (var i in benches) {
+        if (benches[i].startsWith(prefix)) {
+            data[prefix].benches.push(benches[i]);
+            data[prefix].ylabels.push(ylabels[i]);
+            data[prefix].means.push(meansUnscaled[i]);
+        }
+
+    // data[prefix].means = $.scaleTimes(data[prefix].means)   ;
     }
-    else
-      xs[xs.length-1].data.push([means[0][i],-i]);
+}
+for (var pix in  prefixes){
+
+
+  var xs = [];
+  var p = prefixes[pix]
+    console.log(p, pix);
+  var prev = null;
+  var benches = data[p].benches;
+  var means = $.scaleTimes(data[p].means) ;
+  // console.log(means);
+  var meansLabel = means[1]; 
+  // console.log("label is " + meansLabel);
+
+   ylabels = data[p].ylabels;
+   _ylabels = [];
+
+  $("#overview").before('<style>.tickLabel {width: 320px;}</style>')
+
+  for (var i = 0; i < means[0].length; i++) {
+    var label = benches[i].split('/')[1];
+    xs.push({ label: label, data: [[means[0][i], -i]]});
+    var alabel = ylabels[i][1].replace(p+'/','');
+    _ylabels.push([-i, alabel] );
   }
-  var oq = $("#overview");
-  // 
-  o = $.plot(oq, xs, { bars: { show: true, horizontal: true,
-                               barWidth: 0.75, align: "center" },
-                       grid: { borderColor: "#777", hoverable: true },
-                       legend: { show: xs.length > 1 },
-                       xaxis: { max: Math.max.apply(undefined,means[0]) * 1.02 },
-                       yaxis: { ticks: ylabels, tickColor: '#ffffff' } });
-  if (benches.length > 3)
-    o.getPlaceholder().height(28*benches.length);
+
+  $("#overview").before('<h2>'+p+'</h2><div id="overview_' + pix + '" class="ovchart" style="width:900px;height:200px;"></div>');         
+
+  var oq = $("#overview_" + pix  );
+  var o = $.plot(oq, xs, { bars: { show: true, horizontal: true,
+      barWidth: 0.75, align: "center" },
+      grid: { borderColor: "#777", hoverable: true },
+      legend: { show: false/*xs.length > 1*/ },
+      xaxis: { max: Math.max.apply(undefined,means[0]) * 1.02 },
+      yaxis: { ticks: _ylabels, tickColor: '#ffffff' }
+  });
+  // console.log(ylabels);
+  if (benches.length > 3){o.getPlaceholder().height(28*benches.length);}
   o.resize();
   o.setupGrid();
   o.draw();
-  $.addTooltip("#overview", function(x,y) { return x + ' ' + means[1]; });
+  // that function scope trick
+
+  (function(label) { $.addTooltip("#overview_"+pix, function(x,y) { return x + ' ' + label; });} )(meansLabel);
+};
+
+$("#overview").remove();
 });
 $(document).ready(function () {
     $(".time").text(function(_, text) {
