@@ -10,3 +10,5 @@ BenchmarkLog/2013-04-25-1435-bench.html
 BenchmarkLog/2013-04-25-1445-bench.html
 mostlyBuilds.html
 BenchmarkLog
+.cabal-sandbox
+simplemat.s
